@@ -1,0 +1,107 @@
+#!/usr/bin/env python
+#
+#  Print out a shell environment for a backup to run
+
+import sys, os, random, time
+sys.path.append('/usr/local/lib/tummy-backup/lib')
+
+import tbsupp
+from psycopgwrap import Database as db
+db.connect()
+
+
+###################################
+def findBackupGeneration(db, host):
+	if host['retain_monthly'] > 0:
+		count = db.query("SELECT COUNT(*) FROM backups "
+				"WHERE host_id = %s AND generation = 'monthly' "
+					"AND successful = 't' "
+					"AND date_trunc('month', NOW()) "
+						"= date_trunc('month', start_time) "
+				, host['id'])[0]
+		if count and count[0] == 0:
+			return('monthly')
+
+	if host['retain_weekly'] > 0:
+		count = db.query("SELECT COUNT(*) FROM backups "
+				"WHERE host_id = %s AND generation = 'weekly' "
+					"AND successful = 't' "
+					"AND date_trunc('week', NOW()) = date_trunc('week', start_time) "
+				, host['id'])[0]
+		if count and count[0] == 0:
+			return('weekly')
+
+	return('daily')
+
+
+######################
+hostname = sys.argv[1]
+
+config = db.query('SELECT * FROM config')[0]
+backupserver = tbsupp.getThisBackupServer(db)
+host = db.query('SELECT * FROM hosts '
+		'WHERE hostname = %s AND backupserver_id = %s',
+		hostname, backupserver['id'])[0]
+
+#  check for existing backup
+for lock in db.query("SELECT * FROM backups "
+			"WHERE host_id = %s AND backup_pid IS NOT NULL", host['id']):
+	try:
+		os.kill(lock['backup_pid'], 0)
+		sys.stderr.write('There is already a backup running.\n')
+		sys.exit(1)
+	except OSError:
+		pass
+
+	db.query("UPDATE backups SET backup_pid = NULL, successful = 'f' "
+			"WHERE id = %s", lock['id'])
+	db.commit()
+
+print 'MAILTO="%s"' % config['mail_to']
+print 'HOSTNAME="%s"' % host['hostname']
+print 'ACTIVE="%s"' % (host['active'] and '1' or '0')
+print 'BACKUP_ZFS_POOL="%s"' % backupserver['backup_pool']
+print 'BACKUP_ZFS_FILESYSTEM="%s"' % backupserver['backup_filesystem']
+print 'BACKUP_MOUNTPOINT="%s"' % backupserver['backup_mountpoint']
+print 'COMPRESSARG="%s"' % (host['rsync_do_compress'] and '--compress' or '')
+print 'BWLIMITARG="%s"' % (host['rsync_bwlimit']
+		and ('--bwlimit=%s' % host['rsync_bwlimit']) or '')
+print 'DIR="%s"' % os.path.join(backupserver['backup_mountpoint'],
+		host['hostname'])
+
+#  deactivated backups
+if not host['active']:
+		#sys.stderr.write('Backups are disabled.\n')
+		sys.exit(0)
+
+generation = findBackupGeneration(db, host)
+doChecksum = random.randint(0, 30) == 1
+snapshotName = '%s.%s' % ( time.strftime('%Y-%m-%d.%H%M%S'), generation )
+
+db.query('INSERT INTO backups '
+		'( host_id, backupserver_id, backup_pid, generation, was_checksum, '
+				'snapshot_name ) '
+		'VALUES ( %s, %s, %s, %s, %s, %s )',
+		host['id'], backupserver['id'], os.getppid(), generation, doChecksum,
+			snapshotName )
+db.commit()
+backup = db.query('SELECT * FROM backups '
+		'WHERE host_id = %s ORDER BY id DESC LIMIT 1', host['id'])[0]
+print 'BACKUP_ID="%s"' % backup['id']
+print 'GENERATION="%s"' % backup['generation']
+print 'CHECKSUM="%s"' % (doChecksum and '--ignore-times' or '')
+print 'SNAPSHOTNAME="%s"' % backup['snapshot_name']
+
+excludeFile = os.path.join(backupserver['backup_mountpoint'],
+		host['hostname'], 'exclude')
+fp = open(excludeFile + '.tmp', 'w')
+fp.write('#  NOTE: This file is generated from the database, make changes '
+		'there\n')
+for exclude in db.query("SELECT * "
+		"FROM excludes WHERE (host_id IS NULL AND %s::BOOLEAN) OR host_id = %s "
+		"ORDER BY priority ", host['use_global_excludes'], host['id']):
+	fp.write('%s\n' % exclude['rsync_rule'])
+fp.write('#  NOTE: This file is generated from the database, make changes '
+		'there\n')
+fp.close()
+os.rename(excludeFile + '.tmp', excludeFile)

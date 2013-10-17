@@ -1,0 +1,44 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <xi:include href="include-hostmenu.html" />
+  <xi:include href="include-backupmenu.html" />
+
+  <span py:match="template_head" py:strip="">
+  </span>
+
+  <span py:match="template_body" py:strip="">
+
+<?python
+   def elapsed(backup):
+      if not backup['start_time']: return 'Unknown'
+      if not backup['end_time']: return 'In progress'
+      elapsed = backup['end_time'] - backup['start_time']
+      hours = elapsed.seconds / 3600
+      minutes = (elapsed.seconds / 60) % 60
+      if not elapsed.days and not hours:
+         return '%dm' % ( minutes, )
+      if not elapsed.days:
+         return '%dh %dm' % ( hours, minutes )
+      return '%dd %dh %dm' % ( elapsed.days, hours, minutes )
+   ?>
+
+    <p /><a href="${url('destroy')}">Destroy Backup</a>
+
+    <p />
+    <b>Backup ID:</b> ${backup['id']}<br />
+    <b>Status:</b> ${backup['backup_pid'] == None and (backup['successful'] and 'ok' or 'FAILED') or ''}<br />
+    <b>Start:</b> ${backup['start_time'] and backup['start_time'].strftime('%Y/%m/%d %H:%M:%S') or 'None'}<br />
+    <b>Elapsed:</b> ${elapsed(backup)}<br />
+    <b>Checksum:</b> ${backup['was_checksum'] and 'Yes' or 'No'}<br />
+    <b>Generation:</b> ${backup['generation']}<br />
+    <b>rsync Exit Code:</b> <acronym title="${describe_rsync_exit_code(backup['rsync_returncode'])}">${backup['rsync_returncode']}</acronym><br />
+    <b>Snapshot Name:</b> ${backup['snapshot_name']}<br />
+    <a href="${url('logfiles')}">Log file (may take a moment)</a><br />
+    <a href="${url('recover')}">Recovery (may take a moment)</a><br />
+  </span>
+
+  <xi:include href="include-skin.html" />
+
+</html>

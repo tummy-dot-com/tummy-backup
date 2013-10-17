@@ -1,0 +1,165 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <span py:match="template_head" py:strip="">
+    <xi:include href="include-jquery.html" />
+    <xi:include href="include-tablesorter.html" />
+    <xi:include href="include-jqplot.html" />
+
+    <script>
+      $.tablesorter.addParser({
+         // set a unique id
+         id: 'daysago',
+         is: function(s) {
+            // return false so this parser is not auto detected
+            return false;
+         },
+         format: function(s) {
+            // format your data for normalization
+            if (s.toLowerCase() == "never") { return(999999); }
+            return(parseFloat(s.toLowerCase().replace(/d ago/, '')));
+         },
+         // set type, either numeric or text
+         type: 'numeric'
+      });
+
+      $(document).ready(function()
+         {
+         $("#hostTable").tablesorter({ headers: { 4: { sorter:'daysago' } } });
+         graphdata = [${graphdatajs},${graphdatajsmax}];
+         $.jqplot.config.enablePlugins = true;
+         $.jqplot('chartdiv', graphdata,
+            {
+            axes:{
+               xaxis:{
+                  renderer:$.jqplot.DateAxisRenderer,
+                  tickOptions:{formatString:'%b %d'},
+                  },
+               yaxis:{min:0,max:100},
+               },
+            seriesDefaults: {
+               shadow: false,
+               showMarker: false,
+               showLine: true,
+               rendererOptions: {
+                  highlightMouseOver: false,
+                  },
+               fillAndStroke: true,
+               },
+            series: [
+               {
+                  label: 'Average',
+                  fill: true,
+                  fillColor: 'lightsteelblue',
+                  color: 'steelblue',
+                  },
+               {
+                  label: 'Maximum',
+                  fill: false,
+                  color: '#B54984',
+                  },
+               ],
+            legend: { location: 'nw' },
+            cursor: {
+               showCursorLegend: true,
+               showTooltip: false,
+               zoom: false,
+               clickReset: true,
+               showVerticalLine: true,
+               showTooltipDataPosition: true,
+               },
+            });
+         });
+    </script>
+    <style type="text/css">
+      tr.backupdisabled td {
+      color: #aa5555;
+      }
+      tr.backupdisabled td a {
+      color: #aa5555;
+      }
+    </style>
+  </span>
+
+  <span py:match="template_body" py:strip="">
+
+    <div id="chartdiv" style="width:600px;height:200px; "></div>
+
+<py:if test="len(active_backups) > 0">
+    <h2>Active Backups:</h2>
+
+    <div class="table">
+      <table cellpadding="0" cellspacing="0" class="listing">
+         <tr><th>Host</th><th>Generation</th><th>Started</th><th>PID</th><th>Checksum</th></tr>
+        <?python linenumber=1 ?>
+        <tr py:for="backup in active_backups" class="row${(linenumber%2)+1}">
+           <?python linenumber+=1 ?>
+           <td><a href="${url('/hosts/%s/' % backup['hostname'])}">${backup['hostname']}</a></td>
+           <td>${backup['generation']}</td>
+           <td>${backup['start_time'].strftime('%Y-%m-%d %H:%M')}</td>
+           <td>${backup['backup_pid']}</td>
+           <td>${backup['was_checksum']}</td>
+        </tr>
+      </table>
+    </div>
+</py:if>
+
+<py:if test="len(hosts_needing_attention) > 0">
+    <h2>Hosts Needing Attention:</h2>
+    <div class="table">
+      <table cellpadding="0" cellspacing="0" class="listing">
+         <tr>
+            <th>Host</th>
+            <th>Last Success</th>
+            <th>Successful Backups</th>
+         </tr>
+    <?python linenumber=1 ?>
+    <tr py:for="host in hosts_needing_attention" class="row${(linenumber%2)+1}">
+        <?python linenumber+=1 ?>
+        <td><a href="${url('/hosts/%s/' % host['hostname'])}">${host['hostname']}</a></td>
+        <td>${host['last_backup'] and host['last_backup'].strftime('%Y-%m-%d')}</td>
+        <td>${host['backup_count']}</td>
+        </tr>
+      </table>
+    </div>
+</py:if>
+
+<?python
+   def lastbackup(host):
+      if not host['last_backup']: return 'never'
+      #import syslog; syslog.syslog('%s: %s' % ( host['hostname'], str(host['last_backup']) ))
+      days = host['last_backup'].days + (host['last_backup'].seconds / 86400.0)
+      return '%.1fd ago' % days
+?>
+
+    <h2>Hosts (${len(hosts)} total):</h2>
+
+    <div class="table">
+      <table cellpadding="0" cellspacing="0" id="hostTable" class="listing">
+         <thead><tr>
+            <th>Host<img src="${url('/static/skin/img/icons/arrow_down.png')}" /><img src="${url('/static/skin/img/icons/arrow_up.png')}" /></th>
+            <th># Daily<img src="${url('/static/skin/img/icons/arrow_down.png')}" /><img src="${url('/static/skin/img/icons/arrow_up.png')}" /></th>
+            <th># Weekly<img src="${url('/static/skin/img/icons/arrow_down.png')}" /><img src="${url('/static/skin/img/icons/arrow_up.png')}" /></th>
+            <th># Monthly<img src="${url('/static/skin/img/icons/arrow_down.png')}" /><img src="${url('/static/skin/img/icons/arrow_up.png')}" /></th>
+            <th>Last Backup<img src="${url('/static/skin/img/icons/arrow_down.png')}" /><img src="${url('/static/skin/img/icons/arrow_up.png')}" /></th>
+         </tr></thead>
+        <tbody>
+          <?python linenumber=1 ?>
+          <tr py:for="host in hosts" py:attrs="{ 'class' : (host['active'] and 'backupactive' or 'backupdisabled') + ' row%s' % ((linenumber%2)+1) }">
+            <?python linenumber+=1 ?>
+            <td><a href="${url('/hosts/%s/' % host['hostname'])}">${host['hostname']}</a></td>
+            <td>${host['daily_count']}</td>
+            <td>${host['weekly_count']}</td>
+            <td>${host['monthly_count']}</td>
+            <td>${lastbackup(host)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </span>
+
+  <xi:include href="include-skin.html" />
+
+</html>

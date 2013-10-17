@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+#
+#  List information about the backups and hosts
+
+import sys, os
+sys.path.append('/usr/local/lib/tummy-backup/lib')
+
+import tbsupp
+from psycopgwrap import Database as db
+db.connect()
+
+
+if '-?' in sys.argv or '--help' in sys.argv:
+	sys.stderr.write('usage: %s [BACKUP_ID|SNAPSHOT_NAME|HOSTNAME]\n'
+			% os.path.basename(sys.argv[0]))
+	sys.stderr.write('\n')
+	sys.stderr.write('       If no arguments are given, list backup hosts.\n')
+	sys.stderr.write('       Given a BACKUP_ID, list information about the '
+			'backup.\n')
+	sys.stderr.write('       SNAPSHOT_NAME is the same as BACKUP_ID.\n')
+	sys.stderr.write('       Given a HOSTNAME, list backups for that host.\n')
+	sys.exit(1)
+
+#  list backups for a host
+if len(sys.argv) == 2:
+	host = db.queryone("SELECT * FROM hosts WHERE hostname = %s", sys.argv[1])
+	if host:
+		print 'ID      Snapshot Name'
+		print '======= ================================'
+		for backup in db.query("SELECT * FROM backups "
+				"WHERE host_id = %s ORDER BY id DESC", host['id']):
+			print '%-7s %s' % ( backup['id'], backup['snapshot_name'] )
+		sys.exit(0)
+	
+	backup = db.queryone("SELECT * FROM backups WHERE snapshot_name = %s",
+			sys.argv[1])
+	if sys.argv[1].isdigit() and not backup:
+		backup = db.queryone("SELECT * FROM backups WHERE id = %s",
+				int(sys.argv[1]))
+	if backup:
+		print 'ID: %(id)s' % backup
+		print 'Host: %s' % db.queryone(
+				"SELECT hostname FROM hosts WHERE id = %s", backup['host_id'])[0]
+		print 'Generation: %(generation)s' % backup
+		print 'Successful: %(successful)s' % backup
+		print 'Start Time: %(start_time)s' % backup
+		print 'End Time: %(end_time)s' % backup
+		print 'Rsync Returncode: %s (%s)' % ( backup['rsync_returncode'],
+				tbsupp.describe_rsync_exit_code(backup['rsync_returncode']) )
+		print 'Snapshot Name: %(snapshot_name)s' % backup
+		sys.exit(0)
+
+#  list hosts
+print 'Hostname:'
+print '=' * 20
+for host in db.query('SELECT * FROM hosts ORDER BY hostname'):
+	print host['hostname']

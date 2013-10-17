@@ -1,0 +1,24 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <xi:include href="include-hostmenu.html" />
+
+  <span py:match="template_head" py:strip="">
+    <style type="text/css">
+       .error {color:red;}
+    </style>
+  </span>
+
+  <span py:match="template_body" py:strip="">
+
+    <p />If you just created this host, it might be because the host failed
+    to be created.  If that is true, it may be because either the web
+    server cannot access the SSH public key, or the ZFS Backup master
+    server's host key is not in /etc/ssh/ssh_known_hosts on this server
+    (requiring that the web server verify the host key).
+  </span>
+
+  <xi:include href="include-skin.html" />
+
+</html>

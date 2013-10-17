@@ -1,0 +1,65 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <span py:match="template_head" py:strip="">
+    <xi:include href="include-jquery.html" />
+    <xi:include href="include-notice.html" />
+  </span>
+
+  <span py:match="template_body" py:strip="">
+
+    <py:if test="errors">
+      <h2>Form errors:</h2>
+      <ul>
+         <li py:for="error in errors.keys()">${errors[error]}</li>
+      </ul>
+    </py:if>
+
+    <xi:include href="include-popuphelp.html" />
+
+    <form name="configform" method="POST">
+      <input type="submit" value="Save" />
+
+       <table border="1">
+         <tr>
+            <td>${helplabel("helpadminmail", "Admin Mail",
+               """E-mail address which errors, status and report messages are
+               sent to.
+               """)}</td>
+            <td>
+                  <input type="text" size="20"
+                  name="mail_to" value="${formdata['mail_to']}"
+                  /><span py:if="'mail_to' in errors"
+                  class="error">${errors.mail_to}</span></td>
+         </tr>
+         <tr>
+            <td><help name="helpwarnafter" label="Warn After">
+               <h1>Warn After</h1>
+               <p>System which fail backups for this long will have
+               warnings sent to the administrator so the failure can be
+               investigated further.  The default value is "3 days",
+               however if laptops or other intermittantly-connected
+               systems are backed up this should probably be longer.</p>
+
+               <p>This field is an interval, usually something like "3 days"
+               or "1 week", though anything accepted by the database
+               "INTERVAL" type would be acceptable.</p>
+
+               <p>Note: This value can be overridden by changing the
+               configuration for the clients you wish to have a non-default
+               value for.</p>
+            </help></td>
+            <td>
+                  <input type="text" size="11"
+                  name="failure_warn" value="${formdata['failure_warn']}"
+                  /><span py:if="'failure_warn' in errors"
+                  class="error">${errors.failure_warn}</span></td>
+         </tr>
+       </table>
+    </form>
+  </span>
+
+  <xi:include href="include-skin.html" />
+
+</html>

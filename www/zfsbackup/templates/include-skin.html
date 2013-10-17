@@ -1,0 +1,121 @@
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" py:strip="">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>${title}</title>
+
+<script type="text/javascript" src="${url('/static/popuphelp.js')}"></script> 
+
+<style media="all" type="text/css">@import "${url('/static/skin/css/all.css')}";</style>
+<style media="all" type="text/css">@import "${url('/static/skin/css/custom-theme/jquery-ui-1.7.2.custom.css')}";</style>
+<style media="all" type="text/css">@import "${url('/static/style.css')}";</style>
+<!--[if IE 6]>
+	<style media="all" type="text/css">@import "${url('/static/skin/css/ie6.css')}";</style>
+    <style media="all" type="text/css">@import "${url('/static/skin/css/colorbox-ie.csss')}";</style>
+<![endif]-->
+<!--[if lt IE 9]>
+    <script src="http://ie7-js.googlecode.com/svn/version/2.1(beta3)/IE9.js">
+    IE7_PNG_SUFFIX=".png";
+    </script>
+<![endif]-->
+
+      <template_head />
+
+</head>
+<body>
+	<div id="mainWrap">
+		<div id="headerWrap">
+                        <!--
+			<div id="systemMenu">
+				<ul>
+					<li>Welcome John Doe</li>
+					<li class="seperator"><a href="#">My Account</a></li>
+					<li class="seperator"><a href="#">Logout</a></li>
+				</ul>
+			</div>
+			<div id="logo">
+				<img src="img/logo.png" alt="logo" />
+			</div>
+                        -->
+			<div id="topNavigationWrap">
+  		    	<ul class="dropdown">
+					<li py:attrs="current_dashboard"><a href="${url('/')}">Dashboard</a></li>
+					<li py:attrs="current_indexdetails"><a href="${url('/index-detailed/')}">Host Details</a></li>
+					<li py:attrs="current_newbackup"><a href="${url('/newbackup')}">New Backup</a></li>
+					<li py:attrs="current_config"><a href="${url('/config')}">Settings</a></li>
+				</ul>
+			</div>
+		</div>
+
+        <!--Rounded Corners For The Top - START-->
+		<div id="contentWrapTop">
+			<div id="contentWrapTopLeft"></div>
+			<div id="contentWrapTopRight"></div>
+		</div>
+        <!--Rounded Corners For The Top - END-->
+
+        <!--contentWrap START-->
+		<div id="contentWrap">
+
+            <!--contentWrapSidebar START-->
+			<div id="contentWrapSidebar">
+
+				<div id="searchBox">
+					<fieldset>
+                        <legend>Search</legend>
+                        <form action="${url('/hostsearch')}" method="POST"><input size="15" class="formSmall" name="hostname" type="text" /> <input value="Go" class="button" type="submit" /></form>
+					</fieldset>
+				</div>
+
+                <fieldset py:if="host_menu">
+                    <legend>Host Menu</legend>
+                    <ul id="sidebarNavigation" py:for="href, desc, sub_menu in host_menu">
+                        <!-- <li class="active"> -->
+                        <li>
+                            <a href="${href}">${desc}</a>
+                            <ul py:for="href, desc in sub_menu">
+                                <li><a href="${href}">${desc}</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </fieldset>
+
+			</div>
+            <!--contentWrapSidebar END-->
+
+            <!--contentWrapMain START-->
+			<div id="contentWrapMain">
+                <!--
+                <div id="crumbsWrap">
+                    <ul id="crumbs">
+                        <li><a href="#">Home</a></li>
+                        <li><a href="#">Orders</a></li>
+                        <li><a href="#">List Orders</a></li>
+                    </ul>
+                </div>
+                -->
+
+            <h1>${title}</h1>
+
+            <template_body />
+
+                <div id="contentWrapMainBottomSpacer"></div>
+            </div>
+            <!--contentWrapMain END-->
+        </div>
+        <!--contentWrap END-->
+
+        <div id="contentWrapBottom">
+            <div id="contentWrapBottomLeft"></div>
+            <div id="contentWrapBottomRight"></div>
+        </div>
+
+        <div id="footerWrap">
+            Copyright (c) 2010-2011, <a
+            href="http://www.tummy.com/">tummy.com, ltd.</a>
+        </div>
+
+    </div>
+    <!--mainWrap END-->
+
+</body>
+</html>

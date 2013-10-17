@@ -1,0 +1,24 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <xi:include href="include-hostmenu.html" />
+
+  <span py:match="template_head" py:strip="">
+  </span>
+
+  <span py:match="template_body" py:strip="">
+
+    <p />The following hosts match the host name regex you provided:
+
+    <ul>
+      <li py:for="host in hosts">
+        <a href="${url('/hosts/%s/' % host['hostname'])}"
+            >${host['hostname']}</a>
+      </li>
+    </ul>
+  </span>
+
+  <xi:include href="include-skin.html" />
+
+</html>

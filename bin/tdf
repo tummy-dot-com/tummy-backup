@@ -1,0 +1,6 @@
+#!/bin/sh
+#
+#  Short df for use on ZFS systems
+
+df -h  | grep '^ ' | sed -r 's/^ +//' | sort -k5 | grep -v snapshots \
+      | awk '{ printf "%5s %5s %5s %4s %s\n", $1, $2, $3, $4, $5 }'

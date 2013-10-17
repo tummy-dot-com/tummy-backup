@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <xi:include href="include-hostmenu.html" />
+  <xi:include href="include-backupmenu.html" />
+
+  <span py:match="template_head" py:strip="">
+  </span>
+
+  <span py:match="template_body" py:strip="">
+
+    <h2>Warning:</h2>
+
+    <p />Clicking on this button will destroy the backup ${backup['id']}.
+    All this data will be destroyed permanently.
+
+    <h2>Note:</h2>
+
+    <p />This operation will return immediately, and run in the background.
+    Destroying a backup snapshot can take several minutes.  Check back on
+    the host web page to see when it completes.
+
+    <form name="configform" method="POST">
+      <input type="submit" onclick="return confirm('Are you sure you wish to destroy this backup snapshot?')"
+            value="Destroy backup ${backup['id']}" />
+    </form>
+  </span>
+
+  <xi:include href="include-skin.html" />
+
+</html>

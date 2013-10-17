@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+#
+#  Remove a backup from the backup server
+
+import sys, os
+sys.path.append('/usr/local/lib/tummy-backup/lib')
+
+import tbsupp
+from psycopgwrap import Database as db
+db.connect()
+
+
+if '-?' in sys.argv or '--help' in sys.argv or len(sys.argv) != 2:
+	sys.stderr.write('usage: %s [BACKUP_ID]\n'
+			% os.path.basename(sys.argv[0]))
+	sys.stderr.write('\n')
+	sys.stderr.write('       Remove a specific backup from the server.  This '
+			'is a single\n')
+	sys.stderr.write('       backup of a host, not an entire host.\n')
+	sys.exit(1)
+
+backupid = sys.argv[1]
+
+tbsupp.destroyBackup(db, backupid)
+
+print 'Done'

@@ -1,0 +1,6 @@
+Add help to the host configuration page for the rsync rules.
+Add window end code, should be easy if done in the harness.
+
+Job to delete old snapshots.
+Nagios check command.
+Scheduler?

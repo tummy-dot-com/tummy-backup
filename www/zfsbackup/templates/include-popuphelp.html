@@ -1,0 +1,36 @@
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" py:strip="">
+
+<div id="popuphelpbackground"></div>
+
+<div py:match="helpdesc" py:strip="">
+   <div class="popuphelp" id="${select('@name')}">
+      <a class="popuphelpclose">x</a>
+      ${select('*')}
+   </div>
+</div>
+
+<div py:match="helplink" py:strip="">
+   <span onclick="popuphelp('#${select('@name')}'); true;"
+         class="popuphelplabel"
+         >${select('@label')}<span class="popuphelpquestionmark">?</span></span>
+</div>
+
+<div py:match="help" py:strip="">
+   <div class="popuphelp" id="${select('@name')}">
+      <a class="popuphelpclose">x</a>
+      ${select('*')}
+   </div>
+   <span onclick="popuphelp('#${select('@name')}'); true;"
+         class="popuphelplabel"
+         >${select('@label')}<span class="popuphelpquestionmark">?</span></span>
+</div>
+
+<span py:def="helplabel(name, label, body)">
+   <help name="${name}" label="${label}">
+      <h1>${label}</h1>
+      <p>${body}</p>
+   </help>
+</span>
+
+
+</html>

@@ -1,0 +1,269 @@
+#!/usr/bin/env python
+#
+#  Run a command for the web interface
+
+import sys, os, re, time, syslog, subprocess, urllib, tempfile
+sys.path.append('/usr/local/lib/tummy-backup/lib')
+syslog.openlog(os.path.basename(sys.argv[0]))
+
+import tbsupp
+from psycopgwrap import Database as db
+db.connect()
+tbsupp.setupExceptHook()
+
+
+###############
+def readArgs():
+	args = sys.stdin.readline().rstrip().split('\0')
+	return(( args[0], len(args) < 2 and [] or args[1:] ))
+
+
+######################
+def cmdLogfiles(args):
+	backupid, = args
+
+	logDirName = os.path.join(tbsupp.mountSnapshot(db, backupid), 'logs')
+
+	#  Cat out the log files
+	import cgi
+	logList = ['status.out', 'snapshot.out', 'rsync.out']
+	for file in [ os.path.join(logDirName, x) for x in logList ]:
+		sys.stdout.flush()
+		print '<h2>%s:</h2>' % os.path.basename(file)
+		print '<p /><pre>'
+		if not os.path.exists(file):
+			print '[File does not exist]'
+			continue
+		fp = open(file, 'r')
+		while True:
+			data = fp.read(10240)
+			if not data: break
+			print cgi.escape(data)
+		fp.close()
+		print '</pre>'
+	sys.exit(0)
+
+
+######################
+def encodeFilename(s):
+	return urllib.quote(s, ' /+=!@#$^&*()[]{}|";:<>?\'~`')
+
+
+######################
+def decodeFilename(s):
+	return urllib.unquote(s).encode('latin-1')
+
+
+##########################
+def cmdFsbrowsejson(args):
+	try: import json
+	except ImportError: import simplejson as json
+	import stat, time
+
+	backupid, dirname = args
+
+	dataDirName = os.path.join(tbsupp.mountSnapshot(db, backupid), 'data')
+
+	#  create json for the directory
+	dirname = os.path.normpath('/' + dirname).lstrip('/')
+	zfsDirName = os.path.join(dataDirName, dirname)
+	childList = []
+	for entry in sorted(os.listdir(zfsDirName)):
+		info = os.lstat(os.path.join(zfsDirName, entry))
+		fullPath = os.path.join('/', dirname, entry)
+		isFolder = stat.S_ISDIR(info.st_mode)
+		childList.append({
+			'title' : encodeFilename(entry),
+			'key' : encodeFilename(fullPath),
+			'isFolder' : isFolder,
+			'isLazy' : isFolder,
+			'tooltip' : '%s, %s bytes, modified: %s' % ( encodeFilename(fullPath),
+				info.st_size,
+				time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(info.st_mtime)) )
+			})
+	
+	sys.stdout.write(json.dumps(childList))
+
+	sys.exit(0)
+
+
+#######################
+def cmdCreatetar(args):
+	import pickle
+	import subprocess
+
+	backupid, = args
+
+	dataDirName = os.path.join(tbsupp.mountSnapshot(db, backupid), 'data')
+
+	recoverylist = [decodeFilename(os.path.normpath('/' + x).lstrip('/'))
+			for x in pickle.load(sys.stdin)]
+
+	tmpfd, tmpname = tempfile.mkstemp()
+	fp = os.fdopen(tmpfd, 'wb')
+	fp.write('\0'.join(recoverylist) + '\0')
+	fp.close()
+
+	cmd = [ 'tar', 'cz', '-C', dataDirName, '--null', '--files-from', tmpname ]
+	pipe = subprocess.Popen(cmd, stdout = subprocess.PIPE,
+			stderr = subprocess.STDOUT, stdin = subprocess.PIPE, close_fds = True)
+	pipe.stdin.close()
+	while True:
+		data = pipe.stdout.read(102400)
+		if not data: break
+		sys.stdout.write(data)
+	pipe.stdout.close()
+
+	os.remove(tmpname)
+
+	sys.exit(0)
+
+
+#######################
+def cmdNewbackup(args):
+	hostname, = args
+	tbsupp.createNewBackup(db, hostname)
+
+
+#######################
+def cmdUpdateKey(args):
+	hostname, = args
+	tbsupp.updateKey(db, hostname)
+
+
+#######################
+def cmdHostkey(args):
+	hostname, = args
+
+	fp = open(os.path.join(tbsupp.hostDirs(db, hostname).keysDir,
+			'authorized_keys'), 'r')
+	sys.stdout.write(fp.read())
+	fp.close()
+
+
+########################
+def cmdKillbackup(args):
+	hostname, = args
+
+	host = db.queryone("SELECT * FROM hosts WHERE hostname = %s", hostname)
+	backupserver = db.queryone('SELECT * FROM backupservers WHERE id = %s',
+			host['backupserver_id'])
+	if backupserver['hostname'] != os.uname()[1]:
+		sys.stderr.write('ERROR: Host "%s" is backed up on server %s\n' %
+				( hostname, backupserver['hostname'] ))
+		sys.exit(1)
+	
+	recentbackup = db.queryone("SELECT * FROM backups WHERE host_id = %s "
+			"ORDER BY id DESC", host['id'])
+
+	if not recentbackup['backup_pid']:
+		sys.stderr.write('Backup is not running\n')
+		sys.exit(1)
+	
+	if recentbackup['backupserver_id'] != backupserver['id']:
+		sys.stderr.write('This backup is running on another host\n')
+		sys.exit(1)
+	
+	fp = os.popen('ps x -o ppid,pid,comm', 'r')
+	rsyncPid = None
+	for line in fp.readlines():
+		m = re.match(r'^\s*([0-9]+)\s+([0-9]+)\s+rsync\s*$', line)
+		if not m: continue
+		if int(m.group(1)) != recentbackup['backup_pid']: continue
+		rsyncPid = int(m.group(2))
+		break
+
+	if not rsyncPid:
+		sys.stderr.write('Unable to find rsync, perhaps it is nearly done?\n')
+		sys.exit(1)
+
+	os.kill(rsyncPid, 15)
+
+	for i in range(30):
+		db.query("END")
+		db.commit()
+		watchbackup = db.queryone("SELECT backup_pid FROM backups WHERE id = %s",
+				recentbackup['id'])
+		if watchbackup and not watchbackup['backup_pid']: break
+		time.sleep(0.5)
+
+
+#########################
+def cmdStartbackup(args):
+	hostname, = args
+
+	host = db.queryone("SELECT * FROM hosts WHERE hostname = %s", hostname)
+	backupserver = db.queryone('SELECT * FROM backupservers WHERE id = %s',
+			host['backupserver_id'])
+	if backupserver['hostname'] != os.uname()[1]:
+		sys.stderr.write('ERROR: Host "%s" is backed up on server %s\n' %
+				( hostname, backupserver['hostname'] ))
+		sys.exit(1)
+
+	recentbackup = db.queryone("SELECT * FROM backups WHERE host_id = %s "
+			"ORDER BY id DESC", host['id'])
+
+	if recentbackup and recentbackup['backup_pid']:
+		sys.stderr.write('Backup is already running\n')
+		sys.exit(1)
+	
+	os.system('nohup /usr/local/lib/tummy-backup/sbin/zfsharness "%s" '
+			'>/dev/null 2>&1 </dev/null &' % hostname)
+
+	time.sleep(1)
+
+
+#########################
+def cmdDestroyhost(args):
+	hostname, = args
+
+	host = db.queryone("SELECT * FROM hosts WHERE hostname = %s", hostname)
+	backupserver = db.queryone('SELECT * FROM backupservers WHERE id = %s',
+			host['backupserver_id'])
+	if backupserver['hostname'] != os.uname()[1]:
+		sys.stderr.write('ERROR: Host "%s" is backed up on server %s\n' %
+				( hostname, backupserver['hostname'] ))
+		sys.exit(1)
+
+	#  run the destroy in the background
+	subprocess.call('nohup /usr/local/lib/tummy-backup/bin/tbrmhost '
+			'"%s" </dev/null >/dev/null 2>&1 &' % hostname,
+			shell = True, close_fds = True)
+
+
+###########################
+def cmdDestroybackup(args):
+	backupid, = args
+
+	backup = db.queryone("SELECT * FROM backups WHERE id = %s", backupid)
+	host = db.queryone("SELECT * FROM hosts WHERE id = %s", backup['host_id'])
+	backupserver = db.queryone('SELECT * FROM backupservers WHERE id = %s',
+			host['backupserver_id'])
+	if backupserver['hostname'] != os.uname()[1]:
+		sys.stderr.write('ERROR: Host "%s" is backed up on server %s\n' %
+				( hostname, backupserver['hostname'] ))
+		sys.exit(1)
+
+	tbsupp.clearDeadBackups(db, host)
+
+	#  run the destroy in the background
+	subprocess.call('nohup /usr/local/lib/tummy-backup/bin/tbrmbackup '
+			'"%s" </dev/null >/dev/null 2>&1 &' % backupid,
+			shell = True, close_fds = True)
+
+
+##########################
+command, args = readArgs()
+import syslog; syslog.syslog('Command: %s, args: %s' % ( command, repr(args) ))
+{
+		'logfiles' : cmdLogfiles,
+		'fsbrowsejson' : cmdFsbrowsejson,
+		'createtar' : cmdCreatetar,
+		'newbackup' : cmdNewbackup,
+		'hostkey' : cmdHostkey,
+		'killbackup' : cmdKillbackup,
+		'startbackup' : cmdStartbackup,
+		'destroyhost' : cmdDestroyhost,
+		'destroybackup' : cmdDestroybackup,
+		'updatekey' : cmdUpdateKey,
+		}[command](args)

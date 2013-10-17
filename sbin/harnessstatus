@@ -1,0 +1,28 @@
+#!/usr/bin/env python
+#
+#  Update the backup status
+
+import sys
+sys.path.append('/usr/local/lib/tummy-backup/lib')
+import tbsupp
+
+from psycopgwrap import Database as db
+db.connect()
+
+
+backup_id = int(sys.argv[1])
+successful = sys.argv[2]
+if successful == 'NULL': successful = None
+rsync_returncode = int(sys.argv[3])
+
+db.query('UPDATE backups '
+		'SET end_time = NOW(), backup_pid = NULL, '
+			'successful = %s, rsync_returncode = %s '
+		'WHERE id = %s', successful, rsync_returncode, backup_id)
+db.commit()
+
+backup = db.queryone('SELECT * FROM backups WHERE id = %s', backup_id)
+host = db.queryone('SELECT * FROM hosts WHERE id = %s', backup['host_id'])
+backupserver = db.queryone('SELECT * FROM backupservers WHERE id = %s',
+		host['backupserver_id'])
+tbsupp.update_usage_stats(db, backupserver, host)

@@ -1,0 +1,119 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <xi:include href="include-hostmenu.html" />
+
+  <span py:match="template_head" py:strip="">
+    <xi:include href="include-jquery.html" />
+    <xi:include href="include-tablesorter.html" />
+    <xi:include href="include-jqplot.html" />
+    <xi:include href="include-notice.html" />
+
+    <script>
+      $(document).ready(function()
+         {
+         datagraphdata = ${datagraphdatajs};
+         snapgraphdata = ${snapgraphdatajs};
+         yticks = ${yticks};
+         $.jqplot.config.enablePlugins = true;
+         $.jqplot('chartdiv',  [datagraphdata, snapgraphdata],
+            {
+            axes:{
+               xaxis:{
+                  renderer:$.jqplot.DateAxisRenderer,
+                  tickOptions:{formatString:'%b %d'},
+                  },
+               yaxis:{
+                  min:0,
+                  ticks: yticks,
+                  tickOptions:{formatString:'%d'},
+                  //tickOptions:{formatString:'%dGB'},
+                  //max:100,
+                  },
+               },
+            series:[
+               {color:'darkslateblue', fillColor: 'slateblue', },
+               {color:'darkgoldenrod', fillColor: 'goldenrod', },
+               ],
+            stackSeries: true,
+            seriesDefaults: {
+               shadow: false,
+               showMarker: false,
+               showLine: true,
+               fill: true,
+               rendererOptions: {
+                  highlightMouseOver: false,
+                  },
+               fillAndStroke: true,
+               },
+            cursor: {
+               showCursorLegend:false,
+               zoom: false,
+               clickReset: true,
+               showVerticalLine:true,
+               showTooltip: true,
+               showTooltipDataPosition: true,
+               },
+            });
+         });
+    </script>
+  </span>
+
+  <span py:match="template_body" py:strip="">
+
+    <div id="chartdiv" style="width:600px;height:200px; "></div>
+    <h2>Stored on: ${server['hostname']}</h2>
+
+    <py:if test="mostrecentbackup and mostrecentbackup['backup_pid']">
+      <form action="backupctl" method="POST">
+        <input type="submit" name="action" value="Kill Current Backup" />
+      </form>
+    </py:if>
+    <py:if test="not mostrecentbackup or not mostrecentbackup['backup_pid']">
+      <form action="backupctl" method="POST">
+        <input type="submit" name="action" value="Start Backup" />
+      </form>
+    </py:if>
+
+<?python
+   def elapsed(backup):
+      if not backup['start_time']: return 'Unknown'
+      if not backup['end_time']: return 'In progress'
+      elapsed = backup['end_time'] - backup['start_time']
+      hours = elapsed.seconds / 3600
+      minutes = (elapsed.seconds / 60) % 60
+      if not elapsed.days and not hours:
+         return '%dm' % ( minutes, )
+      if not elapsed.days:
+         return '%dh %dm' % ( hours, minutes )
+      return '%dd %dh %dm' % ( elapsed.days, hours, minutes )
+   ?>
+
+    <div class="table">
+      <table cellpadding="0" cellspacing="0" class="listing">
+        <tr><th>Backup</th><th>Status</th><th>Start</th><th>Elapsed</th><th>Checksum</th><th>Generation</th><th>rsync Exit Code</th><th>Snapshot Name</th></tr>
+        <?python linenumber=1 ?>
+        <tr py:for="backup in backups" class="row${(linenumber%2)+1}">
+           <?python linenumber+=1 ?>
+           <?python
+              boldchecksum = {}
+              if backup['was_checksum']:
+                 boldchecksum = { 'style' : 'font-weight:bold' }
+           ?>
+           <td><a href="${url('%s/' % backup['id'])}">${backup['id']}</a></td>
+           <td>${backup['backup_pid'] == None and (backup['successful'] and 'ok' or 'FAILED') or ''}</td>
+           <td>${backup['start_time'] and backup['start_time'].strftime('%Y/%m/%d %H:%M:%S') or 'None'}</td>
+           <td>${elapsed(backup)}</td>
+           <td py:attrs="boldchecksum">${backup['was_checksum'] and 'Yes' or 'No'}</td>
+           <td>${backup['generation']}</td>
+           <td><acronym title="${describe_rsync_exit_code(backup['rsync_returncode'])}">${backup['rsync_returncode']}</acronym></td>
+           <td>${backup['snapshot_name']}</td>
+        </tr>
+      </table>
+    </div>
+  </span>
+
+  <xi:include href="include-skin.html" />
+
+</html>

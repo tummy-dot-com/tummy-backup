@@ -1,0 +1,135 @@
+#!/bin/bash
+#
+#  tummy-backup program that runs the backups for each individual host.
+
+PATH=$PATH:/usr/local/sbin
+RSYNC_RETURNCODE=NULL
+SUCCESSFUL=f
+
+unset SSH_AGENT_PID
+unset SSH_AUTH_SOCK
+
+ENVTMPFILE=`mktemp`
+/usr/local/lib/tummy-backup/sbin/harnessenv "$1" >"$ENVTMPFILE"
+RET=$?
+if [ "$RET" -ne 0 ]; then
+	echo "ERROR: harnessenv returned $RET instead of 0, aborting backup"
+	exit 1
+fi
+eval `cat "$ENVTMPFILE"`
+rm -f "$ENVTMPFILE"
+
+if [ "$ACTIVE" -eq 0 ]; then
+	echo 'Backup is deactivated' >"$DIR/logs/rsync.out"
+	exit 0
+fi
+
+RSYNC_RETURNCODE=-1
+trap '/usr/local/lib/tummy-backup/sbin/harnessstatus "$BACKUP_ID" "$SUCCESSFUL" "$RSYNC_RETURNCODE"' EXIT
+trap 'RSYNC_RETURNCODE=-2; exit 1' INT
+
+if ! awk '{ print $2 }' /proc/mounts | egrep -q '^'"$BACKUP_MOUNTPOINT/$HOSTNAME"'$'; then
+	echo "Backup file-system not mounted: $BACKUP_MOUNTPOINT/$HOSTNAME"
+	exit 1
+fi
+
+#  check parameters
+if [ "${HOSTNAME:-unset}" = unset ]
+then
+	echo "HOSTNAME environment variable is not set."
+	exit 1
+fi
+if [ "${GENERATION:-unset}" = unset ]
+then
+	echo "GENERATION environment variable is not set."
+	exit 1
+fi
+if [ "${DIR:-unset}" = unset ]
+then
+	echo "DIR environment variable is not set."
+	exit 1
+fi
+if [ "${INPLACEARG:-unset}" = unset ]
+then
+	INPLACEARG=--inplace
+fi
+if [ "${INPLACEARG:-unset}" = no ]
+then
+	INPLACEARG=
+fi
+if [ "${COMPRESSARG:-unset}" = unset ]
+then
+	COMPRESSARG=
+fi
+if [ "${BWLIMITARG:-unset}" = unset ]
+then
+	BWLIMITARG=
+fi
+
+#  get into backup directory
+cd "$DIR"
+if [ "$?" -ne 0 ]
+then
+	echo "$DIR does not exist."
+	exit 1
+fi
+[ ! -d logs ] && mkdir logs
+[ ! -d data ] && mkdir data
+chmod 700 data
+cd data
+
+#  run backup
+rm -f "$DIR"/logs/*
+exec >"$DIR/logs/rsync.out" 2>&1
+if [ ! -z "$CHECKSUM" ]
+then
+	echo "*** DOING FULL CHECKSUM RUN ***"
+fi
+START_DATE=`date`
+echo "Starting $HOSTNAME" $START_DATE
+echo ==========================
+RSYNC_START_TIME=`date +%s`
+rsync -e 'ssh -i ../keys/backup-identity' --delete --delete-excluded \
+		$CHECKSUM \
+		$BWLIMITARG \
+		$INPLACEARG \
+		$COMPRESSARG \
+		--filter="merge ../exclude" \
+		--ignore-errors \
+		--hard-links \
+		--itemize-changes \
+		--timeout=3600 \
+		--numeric-ids -av root@${HOSTNAME}:/ .
+#  These are other options we might want to use for backups, but need further
+#  investigation to determine: Are they supported for a ZFS destination,
+#  are they supported by the different rsyncs we have in production, do they
+#  do "graceful degradation" on hosts that don't support them (say Windows,
+#  or old rsync clients, or RHEL 4 clients).
+#		--xattrs \
+#		--acls \
+RSYNC_RETURNCODE="$?"
+RSYNC_END_TIME=`date +%s`
+echo RSYNC_RETURNCODE="$RSYNC_RETURNCODE"
+
+[ "$RSYNC_RETURNCODE" -eq 0 -o "$RSYNC_RETURNCODE" -eq 23 -o "$RSYNC_RETURNCODE" -eq 24 ] && SUCCESSFUL=t
+
+exec >"$DIR/logs/status.out" 2>&1
+echo ==========================
+echo "Started at $START_DATE"
+echo "Done $HOSTNAME" `date`
+echo "Elapsed time: $[RSYNC_END_TIME-RSYNC_START_TIME]"
+echo RSYNC_RETURNCODE="$RSYNC_RETURNCODE"
+echo BACKUP_ID="$BACKUP_ID"
+
+#  make snapshot
+exec >"$DIR/logs/snapshot.out" 2>&1
+zfs snapshot "$BACKUP_ZFS_FILESYSTEM/$HOSTNAME@$SNAPSHOTNAME"
+
+#  make snapshot clone
+#if [ -d "${DIR}"/snapshots ]
+#then
+#	zfs clone "$BACKUP_ZFS_FILESYSTEM/$HOSTNAME@$SNAPSHOTNAME" \
+#			"$BACKUP_ZFS_FILESYSTEM/$HOSTNAME/snapshots/$SNAPSHOTNAME"
+#fi
+
+mv "$BACKUP_MOUNTPOINT"/"$HOSTNAME"/exclude "$BACKUP_MOUNTPOINT"/"$HOSTNAME"/exclude.last

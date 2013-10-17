@@ -1,0 +1,64 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <span py:match="template_head" py:strip="">
+    <xi:include href="include-jquery.html" />
+
+    <style type="text/css">
+       .error { color: red; }
+       .hidden { display: none; }
+    </style>
+  </span>
+
+  <span py:match="template_body" py:strip="">
+
+    <py:if test="errors">
+      <h2>Form errors:</h2>
+      <ul>
+         <li py:for="error in errors.keys()">${errors[error]}</li>
+      </ul>
+    </py:if>
+
+    <xi:include href="include-popuphelp.html" />
+
+    <form name="newbackupform" method="POST">
+       <table border="1">
+         <tr>
+            <td><help name="helpname" label="Backup Client Hostname">
+               <h1>Backup Client Hostname</h1>
+               <p>The hostname of the client that you wish to back up.</p>
+               <p>This needs to be a name which can be resolved to the IP
+               address of the host, so normally it would be a
+               fully-qualified DNS name.  However, other names can be used
+               if you set up an entry in the SSH config file such that you
+               can directly SSH to this name.</p>
+               </help></td>
+            <td><input name="hostname" type="text" size="25" />
+               <span py:if="'hostname' in errors" class="error"
+               >${errors.hostname}</span>
+            </td>
+         </tr>
+         <tr py:attrs="show_serverlist">
+            <td><help name="helpserver" label="Server">
+               <h1>Server</h1>
+               <p>Which server this is backed up on.</p>
+               <p>Note: This field is only displayed if there is more than
+               one server to choose from.</p>
+               </help></td>
+            <td>
+               <select name="servername">
+                  <option py:for="server in backupservers" py:attrs="{ 'value' : server['hostname'], 'selected' : server['selected'] }">${server['hostname']}${server['usage_pct_string']}</option>
+               </select>
+               <span py:if="'servername' in errors" class="error"
+               >${errors.servername}</span>
+            </td>
+         </tr>
+       </table>
+      <input type="submit" value="Create" />
+    </form>
+  </span>
+
+  <xi:include href="include-skin.html" />
+
+</html>

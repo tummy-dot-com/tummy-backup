@@ -1,0 +1,6 @@
+Web template from:
+   http://www.admintemplates.com/
+
+createdb -O tummybackup tummybackup
+psql -d tummybackup --quiet --file /tmp/schema.sql 2>&1 | grep -v NOTICE:
+

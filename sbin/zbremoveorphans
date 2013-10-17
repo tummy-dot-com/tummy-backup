@@ -1,0 +1,63 @@
+#!/usr/bin/env python
+#
+#  Look at zfs file-systems for backups that exist in the file-system but
+#  not in the database.
+
+import sys, os, subprocess, re
+from optparse import OptionParser
+sys.path.append('/usr/local/lib/tummy-backup/lib')
+os.environ['PATH'] = (os.environ['PATH'] +
+		':/usr/sbin:/sbin:/usr/local/sbin:/usr/local/bin')
+
+from psycopgwrap import Database as db
+import tbsupp
+db.connect()
+
+
+############################################
+parser = OptionParser()
+parser.add_option('-v', '--verbose', dest = 'verbose', default = False,
+		action = 'store_true',
+		help = 'Write information about actions to be taken')
+parser.add_option('-n', '--dry-run', dest = 'dryrun', default = False,
+		action = 'store_true',
+		help = 'Perform a trial run without making any changes')
+( options, args ) = parser.parse_args()
+
+config = db.query('SELECT * FROM config')[0]
+backupserver = tbsupp.getThisBackupServer(db)
+tbfsprefix = backupserver['backup_filesystem'] + '/'
+
+pipe = subprocess.Popen(( 'zfs', 'list', '-Hr', '-t', 'snapshot',
+		backupserver['backup_filesystem'] ), stdout = subprocess.PIPE,
+		close_fds = True)
+
+for line in pipe.stdout.readlines():
+	fsname = line.split()[0]
+	if not fsname.startswith(tbfsprefix):
+		sys.stderr.write('Unknown filesystem name: "%s"\n' % fsname)
+		continue
+
+	hostname, snapshotname = fsname[len(tbfsprefix):].split('@')
+
+	if not re.match(r'\d\d\d\d-\d\d-\d\d\.\d\d\d\d\d\d\.(monthly|weekly|daily)',
+			snapshotname):
+		if options.verbose:
+			print 'Skipping snapshot due to name mismatch: "%s"' % fsname
+		continue
+
+	matches = db.queryone("SELECT COUNT(*) FROM backups "
+			"WHERE snapshot_name = %s "
+			"AND host_id = (SELECT id FROM hosts WHERE hostname = %s)",
+			snapshotname, hostname)[0]
+
+	if matches > 0:
+		continue
+	if options.verbose:
+		print 'Destroying %s' % fsname
+	if options.dryrun:
+		continue
+
+	destroyPipe = subprocess.Popen(( 'zfs', 'destroy', '-R', fsname ),
+			close_fds = True)
+	destroyPipe.communicate()

@@ -1,0 +1,18 @@
+#!/usr/bin/env python
+#
+#  List backups that should be run at the current time on the current server.
+
+import sys, os
+sys.path.append('/usr/local/lib/tummy-backup/lib')
+from psycopgwrap import Database as db
+import tbsupp
+db.connect()
+
+
+config = db.query('SELECT * FROM config')[0]
+backupserver = tbsupp.getThisBackupServer(db)
+for host in db.query("SELECT hostname FROM hosts "
+		"WHERE backupserver_id = %s AND "
+			"EXTRACT('hour' FROM window_start_time) "
+				"= EXTRACT('hour' from current_time)", backupserver['id']):
+	print host[0]

@@ -1,0 +1,13 @@
+#!/bin/bash
+#
+#  Daily job to clean up various aspects of tummy-backup
+
+if [ "$1" != "--slave" ]; then
+	/usr/local/lib/tummy-backup/sbin/tbcheckandalert
+fi
+
+/usr/local/lib/tummy-backup/sbin/tbclean
+/usr/local/lib/tummy-backup/sbin/tbexpire
+/usr/local/lib/tummy-backup/sbin/tbremoveorphans
+/usr/local/lib/tummy-backup/sbin/tbstats
+/bin/rmdir /backups/*/snapshots >/dev/null 2>&1

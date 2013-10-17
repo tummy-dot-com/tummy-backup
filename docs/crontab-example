@@ -1,0 +1,20 @@
+MAILTO=user@example.com
+
+00 12 * * * /usr/local/lib/tummy-backup/sbin/tbstats
+01 12 * * * /usr/local/lib/tummy-backup/sbin/tbclean
+02 12 * * * /usr/local/lib/tummy-backup/sbin/tbcheckandalert
+03 12 * * * /usr/local/lib/tummy-backup/sbin/tbexpire
+
+00 20 * * * /usr/local/lib/tummy-backup/sbin/listbackupstorun | xargs --max-args=1 --max-procs=8 --no-run-if-empty /usr/local/lib/tummy-backup/sbin/zfsharness
+
+00 22 * * * /usr/local/lib/tummy-backup/sbin/listbackupstorun | xargs --max-args=1 --max-procs=8 --no-run-if-empty /usr/local/lib/tummy-backup/sbin/zfsharness
+
+00 00 * * * /usr/local/lib/tummy-backup/sbin/listbackupstorun | xargs --max-args=1 --max-procs=6 --no-run-if-empty /usr/local/lib/tummy-backup/sbin/zfsharness
+
+00 03 * * * /usr/local/lib/tummy-backup/sbin/listbackupstorun | xargs --max-args=1 --max-procs=1 --no-run-if-empty /usr/local/lib/tummy-backup/sbin/zfsharness
+
+00 05 * * * /usr/local/lib/tummy-backup/sbin/listbackupstorun | xargs --max-args=1 --max-procs=8 --no-run-if-empty /usr/local/lib/tummy-backup/sbin/zfsharness
+
+00 06 * * * /usr/local/lib/tummy-backup/sbin/listbackupstorun | xargs --max-args=1 --max-procs=8 --no-run-if-empty /usr/local/lib/tummy-backup/sbin/zfsharness
+
+00 10 * * * /usr/local/lib/tummy-backup/sbin/listbackupstorun | xargs --max-args=1 --max-procs=1 --no-run-if-empty /usr/local/lib/tummy-backup/sbin/zfsharness

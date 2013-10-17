@@ -1,0 +1,312 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <xi:include href="include-hostmenu.html" />
+
+  <span py:match="template_head" py:strip="">
+    <xi:include href="include-jquery.html" />
+    <xi:include href="include-notice.html" />
+
+    <style type="text/css">
+       .error {color:red;}
+    </style>
+
+    <script type='text/javascript'>
+      $(document).ready(function() {
+         $(".add-new").click(function() {
+            $('.add-new').hide();
+            $('.input-row:last').clone(true).insertAfter('.input-row:last')
+                  .hide().fadeIn(300);
+            $('.add-new:last').show();
+            return false;
+         });
+      });
+    </script>
+  </span>
+
+  <span py:match="template_body" py:strip="">
+
+    <xi:include href="include-popuphelp.html" />
+
+    <form name="configform" method="POST">
+      <input type="submit" value="Save" />
+
+      <br />
+      <br />
+
+       <table border="1">
+         <tr>
+            <td><help name="helpactive" label="Active">
+               <h1>Active</h1>
+               <p>Select to have the server perform backups of this host.</p>
+
+               <p>If not selected, this host is kept but backups are not
+               attempted.  This is most commonly used for hosts that you do
+               not wish to perform backups on, but do not wish to get rid
+               of the historic backups.</p>
+
+               <p>For example, if the host has been
+               decommissioned, or if it is unavailable for an extended time
+               and you do not wish to get warnings about it not being
+               backed up.</p>
+               </help></td>
+            <td><input type="checkbox" name="active"
+               py:attrs="formdata['active'] and {'checked' : True} or {}"
+               /><span py:if="'active' in errors" class="error"
+               >${errors.active}</span></td>
+         </tr>
+         <tr>
+            <td><help name="helpuseglobalexcludes" label="Use Global Excludes">
+               <h1>Use Global Excludes</h1>
+               <p>Are global excludes used for this host, or only the
+               specific excludes created for this host.</p>
+
+               <p>If checked, the globally-defined excludes are used in
+               addition to the excludes defined for this host (in the lower
+               part of this form).</p>
+               </help></td>
+            <td><input type="checkbox"
+               name="use_global_excludes"
+               py:attrs="formdata['use_global_excludes'] and {'checked' : True} or {}"
+               /><span py:if="'use_global_excludes' in errors" class="error">${errors.use_global_excludes}</span></td>
+         </tr>
+         <tr>
+            <td><help name="helpcompression" label="Compression">
+               <h1>Compression</h1>
+               <p>Is compression used for the transmission of backup data
+               between the client and the server?  This is mostly used for
+               remote systems, as compression of transmitted data uses a
+               lot of CPU resources and often will slow down the backup.</p>
+
+               <p>Note: When changing this option, the "authorized_keys"
+               file entry for this backup must be updated on the client,
+               the compression option is specified in that file as well as
+               on the server.  Once changed, you will need to go into the
+               "SSH Keys" menu entry here, and <b>replace</b> the existing
+               entry on the client with the new one.</p>
+
+               <p>If this setting does not match what is on the client,
+               backups will start, but then fail with protocol errors.</p>
+               </help></td>
+            <td><input type="checkbox"
+               name="rsync_do_compress"
+               py:attrs="formdata['rsync_do_compress'] and {'checked' : True} or {}"
+               /><span py:if="'rsync_do_compress' in errors" class="error">${errors.rsync_do_compress}</span></td>
+               <td>NOTE: Changing requires updating SSH key on client.</td>
+         </tr>
+         <tr>
+            <td><help name="helpfailureintervalbeforewarning" label="Failure interval before warning">
+               <h1>Failure interval before warning</h1>
+               <p>If backups have been failing for more than this long,
+               warnings sent to the administrator so the failure can be
+               investigated further.  The default value is "3 days",
+               however if laptops or other intermittantly-connected
+               systems are backed up this should probably be longer.</p>
+
+               <p>This field is an interval, usually something like "3 days"
+               or "1 week", though anything accepted by the database
+               "INTERVAL" type would be acceptable.</p>
+
+               <p>Note: If left empty, the system-wide value will be used.
+               This field is used if you want to override that default.</p>
+               </help></td>
+            <td><input type="text" size="11"
+                  name="failure_warn" value="${formdata['failure_warn']}"
+                  /><span py:if="'failure_warn' in errors"
+                  class="error">${errors.failure_warn}</span></td>
+                  <td>Empty to use system default.</td>
+         </tr>
+         <tr>
+            <td><help name="helpretaindailies" label="Retain Dailies">
+               <h1>Retain Dailies</h1>
+               <p>The number of daily backups to be kept before old backups
+               are expired.</p>
+               </help></td>
+            <td><input type="text" size="2"
+                  name="retain_daily" value="${formdata['retain_daily']}"
+                  /><span py:if="'retain_daily' in errors"
+                  class="error">${errors.retain_daily}</span></td>
+         </tr>
+         <tr>
+            <td><help name="helpretainweeklies" label="Retain Weeklies">
+               <h1>Retain Weeklies</h1>
+               <p>The number of weekly backups to be kept before old backups
+               are expired.</p>
+               </help></td>
+            <td><input type="text" size="2"
+                  name="retain_weekly" value="${formdata['retain_weekly']}"
+                  /><span py:if="'retain_weekly' in errors"
+                  class="error">${errors.retain_weekly}</span></td>
+         </tr>
+         <tr>
+            <td><help name="helpretainmonthlies" label="Retain Monthlies">
+               <h1>Retain Monthlies</h1>
+               <p>The number of montly backups to be kept before old backups
+               are expired.</p>
+               </help></td>
+            <td><input type="text" size="2"
+                  name="retain_monthly" value="${formdata['retain_monthly']}"
+                  /><span py:if="'retain_monthly' in errors"
+                  class="error">${errors.retain_monthly}</span></td>
+         </tr>
+         <tr>
+            <td><help name="helpwindowstart" label="Window Start">
+               <h1>Window Start</h1>
+               <p>When are backups for this host started?</p>
+               <p>Note: Currently only the hour is used.</p>
+               </help></td>
+            <td><input type="text" size="9"
+                  name="window_start_time"
+                  value="${formdata['window_start_time']}"
+                  /><span py:if="'window_start_time' in errors"
+                  class="error">${errors.window_start_time}</span>
+               <br /><help name="helpwindownow" label="Now:">
+                  <h1>Now</h1><p>Current time on the server, when this
+                  page was loaded, in 24-hour format</p></help>
+                  ${now.strftime('%H:%M')}
+               </td>
+         </tr>
+         <tr>
+            <td><help name="helpwindowend" label="Window End">
+               <h1>Window End</h1>
+               <p>Currently not used.</p>
+               </help></td>
+            <td><input type="text" size="9"
+                  name="window_end_time"
+                  value="${formdata['window_end_time']}"
+                  /><span py:if="'window_end_time' in errors"
+                  class="error">${errors.window_end_time}</span></td>
+         </tr>
+       </table>
+
+       <br />
+
+<helpdesc name="helpdelete">
+<h1>Delete Rule</h1>
+<p>Checking the box under the "Delete" column next to a
+rule and saving the rule-set will cause that rule to be
+deleted.  Delete is only available for host rules, not
+global rules.</p>
+</helpdesc>
+<helpdesc name="helptype">
+<h1>Delete Rule</h1>
+<p>The following rule types may show up in this column:</p>
+<ul>
+ <li><b>New</b>: This is a field that you may enter rules
+ into to create a new "host" rule.</li>
+ <li><b>host</b>: Rules which have been added which are
+ specific to this host.</li>
+ <li><b>GLOBAL</b>: These rules are managed centrally and
+ are applied to all hosts that have the "Use Global
+ Excludes" check-box (on this page) checked.</li>
+</ul>
+</helpdesc>
+<helpdesc name="helppriority">
+<h1>Priority</h1>
+<p>A numeric value between 0 and 9, which determines the
+order rules are written out to the file which is given to
+rsync.  Some rules may override or augment other rules
+that come before or after it, including global rules, and
+the priority allows you to ensure they come in the proper
+order.</p>
+</helpdesc>
+<helpdesc name="helprsyncrule">
+<h1>Rsync Rule</h1>
+<p>This field is an rsync "filter rule", such as "exclude
+/path/to/file".  Note that it cannot just be a path, it
+must include the rule before the path.  Here are the rules
+and their options:</p>
+<ul>
+  <li><b>exclude [PATTERN OR FILENAME]</b>: This file or
+  directory is treated as if it does not exist.</li>
+  <li><b>include [PATTERN OR FILENAME]</b>: Specifically
+  back up matching files/directories.  By default
+  anything not excluded is backed up, but you could use
+  this along with an exclude rule to exclude most things
+  but then override the exclude.</li>
+  <li><b>merge [FILENAME]</b>: Read more rules from the
+  specified on on the destination system.  This can be
+  used to allow users to adjust what files are backed up,
+  say if they have a directory of large ISOs that they do
+  not wish to be backed up.</li>
+  <li><b>dir-merge [FILENAME]</b>: Like "merge", but this
+  filename is checked for in every directory and those
+  rules only apply to that directory.</li>
+  <li><b>clear</b>: Clear the current include/exclude
+  list.  Most likely used in a merge or dir-merge rule to
+  override rules specified on the server side.</li>
+</ul>
+<p>The "hide", "show", "protect" and "risk" rules are not
+likely useful in the backup system.</p>
+<h2>Patterns</h2>
+<p>The include/exclude patterns may take the following special forms:</p>
+<ul>
+   <li><b>Leading /</b>: This rule only matches at the root of the
+   file-system, or starting at the directory a dir-merge file lists the
+   rule in.  Without this anchor, the file/directory may match in
+   sub-directories.</li>
+   <li><b>Trailing /</b>: The rule will only match a directory.</li>
+   <li><b>*</b>: Matches any character except for "/".</li>
+   <li><b>**</b>: Matches the full path, including "/"s that signify
+         sub-directories.</li>
+   <li><b>?</b>: Match any single character except "/".</li>
+   <li><b>[</b>: Specify a range of characters, such as "[0-9a-z].</li>
+   <li><b>dirname/***</b>: Matches the directory and all contents of that
+         directory.</li>
+</ul>
+<p>A pattern without "/" or "**" is checked against the file-name within
+the directory only.  For example "*.py" will match any files in the
+directory that end in ".py".  If the pattern contains a "/" or "**",
+it is checked against the full pathname.</p>
+<p>Full rsync filter rules are documented about 2/3rds of the way down in the
+<a href="http://rsync.samba.org/ftp/rsync/rsync.html">rsync manual</a>.</p>
+</helpdesc>
+
+       <div class="table">
+         <table cellpadding="0" cellspacing="0" class="listing">
+           <tr>
+              <th><helplink name="helpdelete" label="Delete" /></th>
+              <th><helplink name="helptype" label="Type" /></th>
+              <th><helplink name="helppriority" label="Priority" /></th>
+              <th><helplink name="helprsyncrule" label="Rsync Rule" /></th>
+           </tr>
+
+           <tr py:for="prio, prio_error, rule, rule_error in rules_data">
+              <td></td>
+              <td>New:</td>
+              <td><input type="text" size="2" name="new_exclude_priority"
+                 value="${prio}" /><span py:if="prio_error" class="error"
+                    ><br />${prio_error}</span></td>
+              <td><input type="text" size="40" name="new_exclude_rule"
+                 value="${rule}" /><span py:if="rule_error" class="error"
+                    ><br />${rule_error}</span></td>
+           </tr>
+
+           <tr class="input-row">
+              <td></td>
+              <td>New:</td>
+              <td><input type="text" size="2" name="new_exclude_priority"
+                 value="" /></td>
+              <td><input type="text" size="40" name="new_exclude_rule"
+                    value="" />
+                 <img src="${url('/static/skin/img/icons/add.png')}"
+                       class="add-new" alt="+"></img></td>
+           </tr>
+
+           <tr py:for="exclude in excludes">
+              <td><input py:if="exclude['host_id']" type="checkbox"
+                 name="delete_${exclude['id']}" 
+                 py:attrs="{ 'checked' : kwargs.get('delete_%s' % exclude['id'], None)}" /></td>
+              <td>${exclude['host_id'] == None and 'GLOBAL' or 'host'}</td>
+              <td>${exclude['priority']}</td>
+              <td>${exclude['rsync_rule']}</td>
+           </tr>
+         </table>
+       </div>
+    </form>
+  </span>
+
+  <xi:include href="include-skin.html" />
+
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <xi:include href="include-hostmenu.html" />
+  <xi:include href="include-backupmenu.html" />
+
+  <span py:match="template_head" py:strip="">
+    <link rel="stylesheet" type="text/css"
+         href="${url('/static/dynatreeskin/ui.dynatree.css')}" />
+    <script type="text/javascript" src="${url('/static/jquery-latest.js')}"></script> 
+    <script type="text/javascript" src="${url('/static/ui.core.js')}"></script>
+    <script type="text/javascript" src="${url('/static/json2.js')}"></script>
+    <script type="text/javascript" src="${url('/static/jquery.dynatree.min.js')}"></script> 
+
+    <script type='text/javascript'>
+      $(function(){
+        $("#tree").dynatree({
+          title: "${hostname} Filesystem Root",
+          rootVisible: true,
+          keyboard: true, // Support keyboard navigation.
+          clickFolderMode: 2, // 1:activate, 2:expand, 3:activate and expand
+          checkbox: true, // Show checkboxes
+          selectMode: 2, // 1:single, 2:multi, 3:multi-hier
+          initAjax: {url: "ajax", data: {key: "/" } },
+          onLazyRead: function(dtnode){
+            dtnode.appendAjax({
+              url: "ajax",
+              data: { key: dtnode.data.key, mode: "branch" }
+            });
+          },
+        });
+      });
+
+      function clicked() {
+        var selectedData = $("#tree").dynatree("getTree").getSelectedNodes(1);
+        var list = [];
+        <!--
+        for (var i = 0; i < selectedData.length; i++) {
+          list.push(selectedData[i].data.key);
+        }
+        -->
+        $("#recoverylist").attr("value", JSON.stringify(list));
+        // alert("Activated: " + JSON.stringify(list));
+      }
+    </script>
+  </span>
+
+  <span py:match="template_body" py:strip="">
+    <form method="POST">
+      <input type="submit" OnClick="clicked(); return(1);"
+            value="Download Recovery Tar File" />
+      <input type="hidden" name="recoverylist" id="recoverylist" value="" />
+    </form>
+
+    <div id="tree"> </div>
+  </span>
+
+  <xi:include href="include-skin.html" />
+
+</html>

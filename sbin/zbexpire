@@ -1,0 +1,61 @@
+#!/usr/bin/env python
+#
+#  Look for backups that can be removed
+
+import sys, os
+from optparse import OptionParser
+sys.path.append('/usr/local/lib/tummy-backup/lib')
+os.environ['PATH'] = (os.environ['PATH'] +
+		':/usr/sbin:/sbin:/usr/local/sbin:/usr/local/bin')
+
+from psycopgwrap import Database as db
+import tbsupp
+db.connect()
+
+
+############################################
+parser = OptionParser()
+parser.add_option('-v', '--verbose', dest = 'verbose', default = False,
+		action = 'store_true',
+		help = 'Write information about actions to be taken')
+parser.add_option('-n', '--dry-run', dest = 'dryrun', default = False,
+		action = 'store_true',
+		help = 'Perform a trial run without making any changes')
+( options, args ) = parser.parse_args()
+
+config = db.query('SELECT * FROM config')[0]
+backupserver = tbsupp.getThisBackupServer(db)
+for host in db.query('SELECT * FROM hosts'):
+	#  generate a list of backups to expire
+	expire_list = []
+	for generation in [ 'daily', 'weekly', 'monthly' ]:
+		retain = host.get('retain_%s' % generation)
+		backups = list(db.query("SELECT * FROM backups "
+				"WHERE host_id = %s AND generation = %s AND successful = 't' "
+				"ORDER BY start_time DESC", host['id'], generation))
+
+		if len(backups) <= retain:
+			#if options.verbose:
+			#	print 'Not enough backups for generation %s for host %s' % (
+			#			generation, host['hostname'] )
+			continue
+
+		#  get a list of any backups of this generation which are older
+		#  than the first backup past it's expiration date
+		last_backup = backups[retain]
+		for to_expire in list(db.query("SELECT * FROM backups "
+				"WHERE host_id = %s AND generation = %s AND id <= %s "
+				"ORDER BY start_time DESC", host['id'], generation,
+				last_backup['id'])):
+			expire_list.append(to_expire)
+
+	#  expire the backups
+	for backup in sorted(expire_list, key = lambda x: x['id']):
+		if backup['backupserver_id'] != backupserver['id']: continue
+		if options.verbose:
+			print '   Delete %s -> %s' % ( host['hostname'],
+					backup['snapshot_name'] )
+			age = db.query("SELECT NOW() - %s", backup['start_time'])[0][0]
+			print '      %s > %s for %s' % ( age, retain, backup['generation'] )
+		if not options.dryrun:
+			tbsupp.destroyBackup(db, backup['id'], verbose = options.verbose)

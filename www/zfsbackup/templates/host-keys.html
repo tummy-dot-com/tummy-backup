@@ -1,0 +1,35 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <xi:include href="include-hostmenu.html" />
+
+  <span py:match="template_head" py:strip="">
+  </span>
+
+  <span py:match="template_body" py:strip="">
+
+    <py:choose>
+      <py:when test="webcmd_error">
+        <h2>Error getting logfiles:</h2>
+        <p>${webcmd_error}</p>
+
+        <py:if test="output.exit_stdout">
+          <p>STDOUT: ${output.exit_stdout}</p>
+        </py:if>
+        <py:if test="output.exit_stderr">
+          <p>STDERR: ${output.exit_stderr}</p>
+        </py:if>
+        <p>Command: ${output.cmd}</p>
+      </py:when>
+
+      <py:otherwise>
+        <textarea rows="10" cols="80">${key}</textarea>
+      </py:otherwise>
+    </py:choose>
+
+  </span>
+
+  <xi:include href="include-skin.html" />
+
+</html>

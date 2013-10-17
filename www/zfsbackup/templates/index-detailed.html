@@ -1,0 +1,128 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <span py:match="template_head" py:strip="">
+    <script type="text/javascript" src="${url('/static/jquery-latest.js')}"></script> 
+    <script type="text/javascript" src="${url('/static/jquery.tablesorter.js')}"></script> 
+    <script>
+      <!--
+      $.tablesorter.addParser({
+         // set a unique id
+         id: 'daysago',
+         is: function(s) {
+            // return false so this parser is not auto detected
+            return false;
+         },
+         format: function(s) {
+            // format your data for normalization
+            if (s.toLowerCase() == "never") { return(999999); }
+            return(parseFloat(s.toLowerCase().replace(/d ago/, '')));
+         },
+         // set type, either numeric or text
+         type: 'numeric'
+      });
+
+      $.tablesorter.addParser({
+         // set a unique id
+         id: 'sizes',
+         is: function(s) {
+            // return false so this parser is not auto detected
+            return false;
+         },
+         format: function(s) {
+            // format your data for normalization
+            var regex = /([0-9.]+)([a-z]+)/i;
+            if (!regex.test(s)) { return(0); }
+            var matches = regex.exec(s);
+            var fmt = parseFloat(matches[1]).toFixed(3);
+            while (fmt.length < 7) { fmt = "0" + fmt; }
+            if (matches[2] == "B") { fmt = "000000000000000" + fmt; }
+            if (matches[2] == "KiB") { fmt = "000000000000" + fmt; }
+            if (matches[2] == "MiB") { fmt = "000000000" + fmt; }
+            if (matches[2] == "GiB") { fmt = "000000" + fmt; }
+            if (matches[2] == "TiB") { fmt = "000" + fmt; }
+            if (matches[2] == "PiB") { fmt = "" + fmt; }
+            return(fmt);
+         },
+         // set type, either numeric or text
+         type: 'text'
+      });
+
+      $(document).ready(function()
+         {
+         $("#hostTable").tablesorter({ headers: {
+            4: { sorter:'daysago' },
+            5: { sorter:'sizes' },
+            6: { sorter:'sizes' },
+            7: { sorter:'sizes' },
+            } });
+         });
+      -->
+    </script>
+    <style type="text/css">
+      tr.backupdisabled td {
+      background-color: #ffcccc;
+      }
+    </style>
+  </span>
+
+  <span py:match="template_body" py:strip="">
+
+  <h2>Hosts:</h2>
+
+<?python
+   def lastbackup(host):
+      if not host['last_backup']: return 'never'
+      #import syslog; syslog.syslog('%s: %s' % ( host['hostname'], str(host['last_backup']) ))
+      days = host['last_backup'].days + (host['last_backup'].seconds / 86400.0)
+      return '%.1fd ago' % days
+   def prettysize(size, suffix = 'B'):
+      sizeList = (
+         ( 1125899906842624, 'Pi' ),
+         ( 1099511627776, 'Ti' ),
+         ( 1073741824, 'Gi' ),
+         ( 1048576, 'Mi' ),
+         ( 1024, 'Ki' ),
+         )
+      for check, ext in sizeList:
+         if size >= check:
+            return('%.2f%s%s' % ( float(size) / float(check), ext, suffix ))
+      return('%s%s' % ( int(size), suffix ))
+?>
+
+    <table cellpadding="0" cellspacing="0" class="listing" id="hostTable">
+       <thead><tr>
+          <th>Host<img src="${url('/static/skin/img/icons/arrow_down.png')}" /><img src="${url('/static/skin/img/icons/arrow_up.png')}" /></th>
+          <th><abbr title="Number of daily"># D</abbr></th>
+          <th><abbr title="Number of daily"># W</abbr></th>
+          <th><abbr title="Number of daily"># M</abbr></th>
+          <th>Last Backup</th>
+          <th>Data</th>
+          <th>Snaps</th>
+          <th>Total</th>
+          <th><abbr title="Compression Ratio">C/R</abbr></th>
+       </tr></thead>
+        <tbody>
+        <?python linenumber=1 ?>
+        <tr py:for="host in hosts" py:attrs="{ 'class' : (host['active'] and 'backupactive' or 'backupdisabled') + ' row%s' % ((linenumber%2)+1) }">
+           <?python linenumber+=1 ?>
+           <td><a href="${url('/hosts/%s/' % host['hostname'])}">${host['hostname']}</a></td>
+           <td>${host['daily_count']}</td>
+           <td>${host['weekly_count']}</td>
+           <td>${host['monthly_count']}</td>
+           <td>${lastbackup(host)}</td>
+           <td>${prettysize((host['space_used_dataset'] or 0))}</td>
+           <td>${prettysize((host['space_used_snapshots'] or 0))}</td>
+           <td>${prettysize((host['space_used_dataset'] or 0)+(host['space_used_snapshots'] or 0))}</td>
+           <td>${int(host['space_compression_ratio'] or 0)}%</td>
+        </tr>
+        </tbody>
+    </table>
+
+    Total backups: ${len(hosts)}<br />
+  </span>
+
+  <xi:include href="include-skin.html" />
+
+</html>

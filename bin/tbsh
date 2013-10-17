@@ -1,0 +1,46 @@
+#!/usr/bin/env python
+#
+#  Given a backup, this will start a shell in that snapshot
+
+import sys, os
+sys.path.append('/usr/local/lib/tummy-backup/lib')
+
+import tbsupp
+from psycopgwrap import Database as db
+db.connect()
+
+
+if '-?' in sys.argv or '--help' in sys.argv or len(sys.argv) != 2:
+	sys.stderr.write('usage: %s <BACKUP_ID|SNAPSHOT_NAME>\n'
+			% os.path.basename(sys.argv[0]))
+	sys.stderr.write('\n')
+	sys.stderr.write('       Given a snapshot name or backup ID, this will '
+			'set up that snapshot\n')
+	sys.stderr.write('       and start a shell in that directory for doing '
+			'recoveries, etc...\n')
+	sys.exit(1)
+
+backup = db.queryone("SELECT * FROM backups WHERE snapshot_name = %s",
+		sys.argv[1])
+if sys.argv[1].isdigit() and not backup:
+	backup = db.queryone("SELECT * FROM backups WHERE id = %s",
+			int(sys.argv[1]))
+if not backup:
+	sys.stderr.write('ERROR: Unable to find backup "%s"\n' % sys.argv[1])
+	sys.exit(1)
+
+sys.stdout.write("Don't panic!  If we pause here, we are probably "
+		"mounting the snapshot...\r")
+sys.stdout.flush()
+dataDirName = os.path.join(tbsupp.mountSnapshot(db, backup['id']), 'data')
+sys.stdout.write((' ' * 75) + '\r')
+os.chdir(dataDirName)
+print
+print '*' * 60
+print 'NOTE: Running a sub-shell in the data directory.'
+print 'NOTE: You are not chrooted in here, you can cd up...'
+print '*' * 60
+print
+print 'Logs are in ../logs'
+print 'Type "exit" when done with this shell.'
+os.system('bash')

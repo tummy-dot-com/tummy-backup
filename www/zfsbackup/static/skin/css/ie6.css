@@ -1,0 +1,41 @@
+/*IE6 is a very bad boy and here are some IE6 specific styles. On the other hand, as this is an admin template, you will never be using IE6 with a huge possiblity.*/
+
+#topNavigation, #headerWrap, #topNavigation li, #contentWrap, #contentWrapSidebar, #contentWrapMain, #contentNavigationWrap, #dashboardWrap, .paginationWrap, .imagesWrap, #crumbsWrap, .imagesListed, .titleWrap  {
+	zoom: 1;
+}
+
+#topNavigation{
+	margin: 0 0 14px 250px;
+}
+
+#topNavigation li{
+	margin: 0 5px 0 0;
+}
+
+#contentWrapTopRight, #contentWrapBottomRight {
+	position:relative;
+}
+
+#contentWrap {
+	margin-top: 0;
+}
+
+#contentWrapMain{	
+	margin: 7px 10px 5px 0;
+}
+
+#contentWrapSidebar{
+	margin: 7px 1px 5px 5px;
+}
+
+#dashboardWrap {
+	padding-bottom: 10px;
+}
+
+.loginForm{
+	margin-top: 7px;
+}
+
+#loginFormSubmitWrap {
+	height: 40px;
+}

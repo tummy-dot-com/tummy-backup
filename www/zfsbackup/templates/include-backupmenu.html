@@ -1,0 +1,12 @@
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" py:strip="">
+
+<?python
+   host_menu.append(
+         ( url('/hosts/%s/%s/' % ( hostname, backupid )), 'Backup' , (
+               ( url('/hosts/%s/%s/logfiles' % ( hostname, backupid )), 'Logfiles' ),
+               ( url('/hosts/%s/%s/recover' % ( hostname, backupid )), 'Recovery' ),
+               ( url('/hosts/%s/%s/destroy' % ( hostname, backupid )), 'Destroy' ),
+            )),
+         )
+?>
+</html>

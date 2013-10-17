@@ -1,0 +1,12 @@
+<html xmlns:py="http://genshi.edgewall.org/" xmlns="http://www.w3.org/1999/xhtml" xmlns:xi="http://www.w3.org/2001/XInclude" py:strip="">
+
+<?python
+   host_menu = [
+         ( url('/hosts/%s/' % hostname), 'Host' , (
+               ( url('/hosts/%s/config' % hostname), 'Configuration' ),
+               ( url('/hosts/%s/keys' % hostname), 'SSH Key' ),
+               ( url('/hosts/%s/destroy' % hostname), 'Destroy Host' ),
+            )),
+         ]
+?>
+</html>

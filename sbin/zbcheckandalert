@@ -1,0 +1,36 @@
+#!/usr/bin/env python
+#
+#  Check for backup issues, and e-mail alert if there are issues
+
+import sys, os
+sys.path.append('/usr/local/lib/tummy-backup/lib')
+
+from psycopgwrap import Database as db
+import tbsupp
+
+
+db.connect()
+
+config = db.query("SELECT * FROM config LIMIT 1")[0]
+
+hosts_needing_attention = tbsupp.getHostsNeedingAttention(db)
+if not hosts_needing_attention: sys.exit(0)
+
+maxHostnameLength = max([ len(x['hostname']) for x in hosts_needing_attention])
+
+fp = sys.stdout
+
+fp = os.popen('/usr/sbin/sendmail -t -oi', 'w')
+fp.write('From: %s\n' % config['mail_to'])
+fp.write('To: %s\n' % config['mail_to'])
+fp.write('Subject: Backups needing attention on %s\n' % os.uname()[1])
+fp.write('\n')
+fp.write('Hosts needing attention on %s:\n' % os.uname()[1])
+fp.write('\n')
+fp.write('%-*s   Last Backup   Backup Count\n'
+		% ( maxHostnameLength, 'Hostname' ))
+fp.write(('=' * maxHostnameLength) + '   ===========   ============\n')
+for host in hosts_needing_attention:
+	fp.write('%-*s   %-11s   %s\n' % ( maxHostnameLength, host['hostname'],
+			host['last_backup'] and host['last_backup'].strftime('%Y-%m-%d'),
+			host['backup_count']))
