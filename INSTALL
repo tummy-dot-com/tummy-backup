@@ -66,6 +66,7 @@ Install tummy-backup Master
    mkdir -p /etc/tummy-backup
    echo dbname=tummybackup user=tummybackup password=PASSWORD host=127.0.0.1 >/etc/tummy-backup/dbconnect
    chmod 640 /etc/tummy-backup/dbconnect
+   chown root:www-data /etc/tummy-backup/dbconnect
 
    su postgres -c 'createuser -DRSP tummybackup'
    <Enter the password from above>
