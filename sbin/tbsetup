@@ -16,7 +16,7 @@ db.query(
     """INSERT INTO backupservers
         (hostname, scheduler_slots, backup_pool, backup_filesystem,
             backup_mountpoint, ssh_supports_y)
-    VALUES (%s,0,'backups','/backups','backups','t');""",
+    VALUES (%s,0,'backups','backups','/backups','t');""",
     os.uname()[1])
 db.commit()
 
