@@ -1,0 +1,69 @@
+These instructions were created on Ubuntu 12.04.
+
+You need a 64-bit install because ZFS is generally considered to be
+happier under 64-bit, and the PPA only supports 64-bit..
+
+Install ZFS:
+
+   Based on this guide:
+
+      https://github.com/zfsonlinux/pkg-zfs/wiki/HOWTO-install-Ubuntu-to-a-Native-ZFS-Root-Filesystem
+
+   apt-get install python-software-properties
+   apt-add-repository --yes ppa:zfs-native/stable
+   apt-get update
+   apt-get install debootstrap ubuntu-zfs
+   modprobe zfs
+   Edit /etc/default/zfs and set "ZFS_MOUNT" and "ZFS_UMOUNT" to "yes".
+
+Create ZFS pool for backups:
+
+   You will need one or more device partitions to store the ZFS on.  Ideally,
+   you would give ZFS a number of raw devices rather than a RAID array device.
+   Best performance is if you use the full device ("/dev/sda" rather than
+   "/dev/sda1").
+
+   For device names, you typically want to use the device files in
+   /dev/disk/by-id.
+
+   If you have one big device, use:
+
+      zpool create -o ashift=12 backups DEV_FILE
+
+   If you have many devices and want to be able to survive a single device
+   failure:
+
+      zpool create -o ashift=12 backups raidz DEV_FILE [...]
+
+
+   If you want to be able to survive 2 device failures, at the cost of losing
+   two discs worth of storage capacity:
+
+      zpool create -o ashift=12 backups raidz2 DEV_FILE [...]
+
+Tuning ZFS
+
+   You probably want to enable compression:
+
+      zfs set compression=on backups
+
+   You *MIGHT* want to set deduplication:
+
+      zfs set dedup=verify backups
+
+   However, deduplication can be very hard on the system.  It needs plenty of
+   RAM, probably at least 8GB, and ideally should have a L2ARC device on SSD:
+
+      zpool add backups cache SSD_DEV_FILE
+
+Install Requirements
+
+   apt-get install python-psycopg2 libapache2-mod-wsgi postgresql mailutils
+
+Install tummy-backup Master
+
+   su postgres -c 'createuser -DRSP tummybackup'
+   <Enter a password for the database connection>
+   su postgres -c 'createdb -O tummybackup tummybackup'
+   su postgres -c 'psql -d tummybackup --quiet' <schema.sql
+

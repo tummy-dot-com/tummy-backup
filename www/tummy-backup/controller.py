@@ -4,7 +4,7 @@ import os, sys, time
 sys.path.append('/usr/local/lib/tummy-backup/www/lib')
 sys.path.append('/usr/local/lib/tummy-backup/lib')
 
-import zbsupp
+import tbsupp
 
 import cherrypy, routes
 import cherrypy.lib.auth_basic
@@ -172,13 +172,13 @@ class Root(object):
 
     @cherrypy.expose
     def index(self):
-        import zbsupp
+        import tbsupp
 
         current_dashboard = { 'class' : 'current' }
 
         db = dbconnect()
 
-        hosts_needing_attention = zbsupp.getHostsNeedingAttention(db)
+        hosts_needing_attention = tbsupp.getHostsNeedingAttention(db)
 
         hosts = list(db.query("SELECT *, "
                 " (SELECT COUNT(*) FROM backups "
@@ -221,13 +221,13 @@ class Root(object):
 
     @cherrypy.expose
     def detailedindex(self):
-        import zbsupp
+        import tbsupp
 
         current_indexdetails = { 'class' : 'current' }
 
         db = dbconnect()
 
-        hosts_needing_attention = zbsupp.getHostsNeedingAttention(db)
+        hosts_needing_attention = tbsupp.getHostsNeedingAttention(db)
 
         hosts = list(db.query("SELECT *, "
                 " (SELECT COUNT(*) FROM backups "
@@ -345,7 +345,7 @@ class Root(object):
                 "ORDER BY backups.id DESC", hostname)
         mostrecentbackup = db.queryone("SELECT * FROM backups "
                 "WHERE host_id = %s ORDER BY id DESC LIMIT 1", host['id'])
-        from zbsupp import describe_rsync_exit_code
+        from tbsupp import describe_rsync_exit_code
 
         datagraphdatajs = '['
         snapgraphdatajs = '['
@@ -469,8 +469,8 @@ class Root(object):
                         deleteId, host['id'])
             db.commit()
 
-            output = zbsupp.runWebCmd(
-                    zbsupp.lookupBackupServer(db, clienthostname = hostname),
+            output = tbsupp.runWebCmd(
+                    tbsupp.lookupBackupServer(db, clienthostname = hostname),
                     'updatekey\0%s\n' % ( hostname, ))
 
             if output.template_error():
@@ -506,8 +506,8 @@ class Root(object):
         host = db.query("SELECT * FROM hosts WHERE hostname = %s", hostname)[0]
 
         if cherrypy.request.method == 'POST':
-            output = zbsupp.runWebCmd(
-                    zbsupp.lookupBackupServer(db, clienthostname = hostname),
+            output = tbsupp.runWebCmd(
+                    tbsupp.lookupBackupServer(db, clienthostname = hostname),
                     'destroyhost\0%s\n' % ( hostname, ))
 
             if output.template_error():
@@ -532,8 +532,8 @@ class Root(object):
                 backupid)
 
         if cherrypy.request.method == 'POST':
-            output = zbsupp.runWebCmd(
-                    zbsupp.lookupBackupServer(db, backupid = backupid),
+            output = tbsupp.runWebCmd(
+                    tbsupp.lookupBackupServer(db, backupid = backupid),
                     'destroybackup\0%s\n' % ( backupid, ))
 
             if output.template_error():
@@ -554,8 +554,8 @@ class Root(object):
         command = 'startbackup'
         if action.startswith('Kill'): command = 'killbackup'
 
-        output = zbsupp.runWebCmd(
-                zbsupp.lookupBackupServer(db, clienthostname = hostname),
+        output = tbsupp.runWebCmd(
+                tbsupp.lookupBackupServer(db, clienthostname = hostname),
                 '%s\0%s\n' % ( command, hostname ))
 
         #  wait for child to finish
@@ -579,8 +579,8 @@ class Root(object):
 
         title = 'Logs for Backup %s of %s' % ( backupid, hostname )
 
-        output = zbsupp.runWebCmd(
-                zbsupp.lookupBackupServer(db, backupid = backupid),
+        output = tbsupp.runWebCmd(
+                tbsupp.lookupBackupServer(db, backupid = backupid),
                 'logfiles\0%s\n' % backupid)
         logfileoutput = Markup(output.stdout.read())
         webcmd_error = output.template_error()
@@ -595,8 +595,8 @@ class Root(object):
         cherrypy.response.headers['Content-Type']= 'application/json'
 
         db = dbconnect()
-        output = zbsupp.runWebCmd(
-                zbsupp.lookupBackupServer(db, clienthostname = hostname),
+        output = tbsupp.runWebCmd(
+                tbsupp.lookupBackupServer(db, clienthostname = hostname),
                 'fsbrowsejson\0%s\0%s\n' % ( backup, kwargs['key'] ))
 
         return(output.persistent_stdout())
@@ -616,8 +616,8 @@ class Root(object):
 
             db = dbconnect()
 
-            output = zbsupp.runWebCmd(
-                    zbsupp.lookupBackupServer(db, backupid = backupid),
+            output = tbsupp.runWebCmd(
+                    tbsupp.lookupBackupServer(db, backupid = backupid),
                     ('createtar\0%s\n' % backupid) + pickle.dumps(recoverylist))
 
             filename = 'recovery-%s-%s.tar.gz' % ( hostname, backupid )
@@ -641,7 +641,7 @@ class Root(object):
         backup = db.queryone("SELECT * FROM backups "
                 "WHERE host_id = %s AND backups.id = %s ",
                 host['id'], int(backupid))
-        from zbsupp import describe_rsync_exit_code
+        from tbsupp import describe_rsync_exit_code
 
         tmpl = loader.load('backup.html')
         return tmpl.generate(contextFromLocals(locals())).render('html',
@@ -654,8 +654,8 @@ class Root(object):
 
         title = 'SSH Key for %s' % ( hostname, )
 
-        output = zbsupp.runWebCmd(
-                zbsupp.lookupBackupServer(db, clienthostname = hostname),
+        output = tbsupp.runWebCmd(
+                tbsupp.lookupBackupServer(db, clienthostname = hostname),
                 'hostkey\0%s\n' % hostname)
         key = output.stdout.read()
         webcmd_error = output.template_error()
@@ -679,7 +679,7 @@ class Root(object):
         if cherrypy.request.method == 'POST' and not errors:
             db = dbconnect()
 
-            output = zbsupp.runWebCmd(zbsupp.lookupBackupServer(db,
+            output = tbsupp.runWebCmd(tbsupp.lookupBackupServer(db,
                         backupservername = formdata['servername']),
                     'newbackup\0%s\n' % formdata['hostname'])
 
