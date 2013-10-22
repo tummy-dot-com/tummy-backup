@@ -82,6 +82,12 @@ Install tummy-backup Master
    chown www-data:www-data www/keys
    chmod 700 www/keys
 
+   cp files/apache-tummy-backup.conf /etc/apache2/conf.d/tummy-backup.conf
+   /etc/init.d/apache2 restart
+
+   htpasswd -c /etc/tummy-backup/htpasswd admin
+   <Enter a password for the web interface>
+
    Add the "www/keys/identity.pub" data to /root/.ssh/authorized_keys prefixed
    by this, with the key at the end of the second line:
 
@@ -102,7 +108,11 @@ Install tummy-backup Master
       cp /root/.ssh/known_hosts /etc/ssh/ssh_known_hosts
       chmod 644 /etc/ssh/ssh_known_hosts
 
+   cp files/cron-tummy-backup-master /etc/cron.d/tummy-backup-master
+
 Install tummy-backup Node
+
+   [THESE NOTES ARE INCOMPLETE, I HAVEN'T DONE A NEW NODE-ONLY SETUP]
 
    mkdir /usr/local/lib/tummy-backup
    cp -av . /usr/local/lib/tummy-backup
