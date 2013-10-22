@@ -58,12 +58,52 @@ Tuning ZFS
 
 Install Requirements
 
-   apt-get install python-psycopg2 libapache2-mod-wsgi postgresql mailutils
+   apt-get install python-psycopg2 libapache2-mod-wsgi postgresql mailutils \
+         python-cherrypy3 python-routes python-genshi python-formencode
 
 Install tummy-backup Master
 
+   mkdir -p /etc/tummy-backup
+   echo dbname=tummybackup user=tummybackup password=PASSWORD host=127.0.0.1 >/etc/tummy-backup/dbconnect
+   chmod 640 /etc/tummy-backup/dbconnect
+
    su postgres -c 'createuser -DRSP tummybackup'
-   <Enter a password for the database connection>
+   <Enter the password from above>
    su postgres -c 'createdb -O tummybackup tummybackup'
    su postgres -c 'psql -d tummybackup --quiet' <schema.sql
+
+   mkdir /usr/local/lib/tummy-backup
+   cp -av . /usr/local/lib/tummy-backup
+   cd /usr/local/lib/tummy-backup
+   mkdir www/keys
+   ssh-keygen -t dsa -N '' -f www/keys/identity
+   chown www-data:www-data www/keys/identity
+   chmod 400 www/keys/identity
+   chown www-data:www-data www/keys
+   chmod 700 www/keys
+
+   Add the "www/keys/identity.pub" data to /root/.ssh/authorized_keys prefixed
+   by this, with the key at the end of the second line:
+
+      #  for tummy-backup webcmd
+      no-pty,no-agent-forwarding,no-X11-forwarding,no-port-forwarding,command="/usr/local/lib/tummy-backup/sbin/webcmd"
+
+   Test this by running:
+
+      echo ping | SSH_AUTH_SOCK= ssh -i /usr/local/lib/tummy-backup/www/keys/identity root@`hostname` true
+
+   This might ask you to verify the host key, and then it should respond with
+   "Pong".  If it does not, there is a problem that will prevent the web
+   interface from working.
+
+   The host key also needs to be available to the web server user.  Probably
+   the best way to do this is to:
+
+      cp /root/.ssh/known_hosts /etc/ssh/ssh_known_hosts
+      chmod 644 /etc/ssh/ssh_known_hosts
+
+Install tummy-backup Node
+
+   mkdir /usr/local/lib/tummy-backup
+   cp -av . /usr/local/lib/tummy-backup
 

@@ -1,0 +1,57 @@
+#!/usr/bin/env python
+#
+#  Run to set up the initial database settings.
+
+import sys
+import os
+
+from psycopgwrap import Database as db
+db.connect()
+
+if db.queryone("SELECT COUNT(*) FROM backupservers")[0] > 0:
+    print 'ERROR: A server already exists.  Aborting.'
+    sys.exit(1)
+
+db.query(
+    """INSERT INTO backupservers
+        (hostname, scheduler_slots, backup_pool, backup_filesystem,
+            backup_mountpoint, ssh_supports_y)
+    VALUES (%s,0,'backups','/backups','backups','t');""",
+    os.uname()[1])
+db.commit()
+
+for path in [
+        'exclude /proc/',
+        'exclude /sys/',
+        'exclude /dev/',
+        'exclude /var/named/chroot/proc/',
+        'exclude /media/',
+        'exclude /home/*/.mozilla/firefox/*.default/Cache/',
+        'exclude /home/*/.opera/opcache/',
+        'exclude /home/*/.dbus/session-bus/',
+        'exclude /home/*/.ccache/',
+        'exclude /home/*/.opera/cache/',
+        'exclude /home/*/.mozilla/firefox/default.*/Cache/',
+        'exclude /home/*/.cache/chromium/Cache/',
+        'exclude /home/*/.macromedia/Flash_Player/#SharedObjects/',
+        'exclude /home/*/.dbus/session-bus/',
+        'exclude /home/*/.gvfs/',
+        'exclude /tmp/orbit-*/',
+        'exclude /tmp/keyring-*/',
+        'exclude /tmp/gpg-*/',
+        'exclude /tmp/.ICE-unix/',
+        'exclude /tmp/.X11-unix/',
+        'exclude /tmp/.esd-1000/',
+        'exclude /tmp/.s.PGSQL.*',
+        'exclude /tmp/ksocket-*/',
+        'exclude /tmp/pulse-*/',
+        'exclude /tmp/ssh-*/',
+        'exclude /var/spool/postfix/private/',
+        'exclude /var/spool/postfix/public/',
+        'exclude /var/cache/yum/',
+        'exclude /var/tmp/yum-*-*/',
+        'exclude /var/cache/apt/archives/',
+        'dir-merge .tummy-backup-filter', ]:
+    db.query("INSERT INTO excludes (priority, rsync_rule) VALUES (5,%s)", path)
+db.query("INSERT INTO config (mail_to) VALUES ('root')")
+db.commit()

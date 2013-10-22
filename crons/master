@@ -1,0 +1,10 @@
+MAILTO=root
+
+00 08 15 * * zpool scrub backups >/tmp/zpool-scrub.out 2>&1
+
+00 12 * * * /usr/local/lib/tummy-backup/sbin/tbstats
+01 12 * * * /usr/local/lib/tummy-backup/sbin/tbclean
+02 12 * * * /usr/local/lib/tummy-backup/sbin/tbcheckandalert
+03 12 * * * /usr/local/lib/tummy-backup/sbin/tbexpire
+
+00 20 * * * /usr/local/lib/tummy-backups/sbin/listbackupstorun | xargs --max-args=1 --max-procs=8 --no-run-if-empty /usr/local/lib/tummy-backups/sbin/zfsharness

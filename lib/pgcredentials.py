@@ -10,8 +10,8 @@ import os
 
 def loadConnectString():
 	for filename in [
-			'/etc/tummybackup/dbconnect',
-			'/usr/local/lib/tummybackup/conf/dbconnect',
+			'/etc/tummy-backup/dbconnect',
+			'/usr/local/lib/tummy-backup/conf/dbconnect',
 			]:
 		if os.path.exists(filename):
 			fp = open(filename, 'r')

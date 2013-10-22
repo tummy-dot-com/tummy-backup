@@ -252,6 +252,11 @@ def cmdDestroybackup(args):
 			shell = True, close_fds = True)
 
 
+##################
+def cmdPing(args):
+	print 'Pong'
+
+
 ##########################
 command, args = readArgs()
 import syslog; syslog.syslog('Command: %s, args: %s' % ( command, repr(args) ))
@@ -266,4 +271,5 @@ import syslog; syslog.syslog('Command: %s, args: %s' % ( command, repr(args) ))
 		'destroyhost' : cmdDestroyhost,
 		'destroybackup' : cmdDestroybackup,
 		'updatekey' : cmdUpdateKey,
+		'ping' : cmdPing,
 		}[command](args)
