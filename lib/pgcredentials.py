@@ -5,21 +5,20 @@
 #
 #  	dbname=tummybackup user=USERNAME host=127.0.0.1 password=PASSWORD
 
-
 import os
 
-def loadConnectString():
-	for filename in [
-			'/etc/tummy-backup/dbconnect',
-			'/usr/local/lib/tummy-backup/conf/dbconnect',
-			]:
-		if os.path.exists(filename):
-			fp = open(filename, 'r')
-			line = fp.readline().strip()
-			fp.close()
-			return(line)
 
-	#  default
-	return('dbname=tummybackup')
+def loadConnectString():
+    for filename in [
+            '/etc/tummy-backup/dbconnect',
+            '/usr/local/lib/tummy-backup/conf/dbconnect']:
+        if os.path.exists(filename):
+            fp = open(filename, 'r')
+            line = fp.readline().strip()
+            fp.close()
+            return(line)
+
+    #  default
+    return('dbname=tummybackup')
 
 connectString = loadConnectString()
