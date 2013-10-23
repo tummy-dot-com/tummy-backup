@@ -199,7 +199,7 @@ class Root(object):
                 "WHERE backups.backup_pid IS NOT NULL "
                     "AND hosts.id = backups.host_id "
                 "ORDER BY backups.start_time"))
-        title = 'ZFS Backup'
+        title = 'Tummy-Backup'
 
         graphdatajs = '['
         graphdatajsmax = '['
