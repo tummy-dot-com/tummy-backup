@@ -3,13 +3,12 @@
 #  Look for backups that can be removed
 #  NOTE: This should run on every backup server
 
-import sys, os
+import sys
 sys.path.append('/usr/local/lib/tummy-backup/lib')
 
 import tbsupp
 from psycopgwrap import Database as db
 db.connect()
-
 
 #  backups that are no longer running
 tbsupp.clearDeadBackups(db)

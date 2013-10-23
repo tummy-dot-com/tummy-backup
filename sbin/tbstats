@@ -5,8 +5,8 @@
 import os
 import sys
 sys.path.append('/usr/local/lib/tummy-backup/lib')
-os.environ['PATH'] = (os.environ['PATH'] +
-		':/usr/sbin:/sbin:/usr/local/sbin:/usr/local/bin')
+os.environ['PATH'] = (
+    os.environ['PATH'] + ':/usr/sbin:/sbin:/usr/local/sbin:/usr/local/bin')
 import tbsupp
 import syslog
 
@@ -16,51 +16,54 @@ db.connect()
 
 ####################################
 def updateServerStats(backupserver):
-	varDir = os.path.join('/usr/local/lib/tummy-backup', 'var')
-	if not os.path.exists(varDir):
-		os.makedirs(varDir)
+    varDir = os.path.join('/usr/local/lib/tummy-backup', 'var')
+    if not os.path.exists(varDir):
+        os.makedirs(varDir)
 
-	fp = os.popen("zpool get size,capacity,dedupratio,free,allocated '%s' "
-			"2>/dev/null" % backupserver['backup_pool'], 'r')
-	data = {}
-	for line in fp.readlines():
-		fields = line.strip().split()
-		if fields[0] == 'NAME': continue
-		data[fields[1]] = float(fields[2][:-1]) * {
-				'%' : 1,
-				'x' : 100,
-				'K' : 1000,
-				'M' : 1000000,
-				'G' : 1000000000,
-				'T' : 1000000000000,
-				}[fields[2][-1]]
-	fp.close()
+    fp = os.popen(
+        "zpool get size,capacity,dedupratio,free,allocated '%s' "
+        "2>/dev/null" % backupserver['backup_pool'], 'r')
+    data = {}
+    for line in fp.readlines():
+        fields = line.strip().split()
+        if fields[0] == 'NAME':
+            continue
+        data[fields[1]] = float(fields[2][:-1]) * {
+            '%': 1,
+            'x': 100,
+            'K': 1000,
+            'M': 1000000,
+            'G': 1000000000,
+            'T': 1000000000000}[fields[2][-1]]
+    fp.close()
 
-	try:
-		db.query("INSERT INTO serverusage "
-				"( server_id, sample_date, total_bytes, free_bytes, used_bytes, "
-				"usage_pct, dedup_ratio ) "
-				"VALUES ( %s, NOW(), %s, %s, %s, %s, %s )",
-				backupserver['id'], data['size'], data['free'], data['allocated'],
-				data['capacity'], data['dedupratio'] )
-		db.commit()
-	except IntegrityError:
-		db.rollback()
-	except KeyError, e:
-		#  the "zpool get" command didn't get all the requested items
-		syslog.syslog('Error getting server stats: %s' % str(e))
+    try:
+        db.query(
+            "INSERT INTO serverusage "
+            "( server_id, sample_date, total_bytes, free_bytes, used_bytes, "
+            "usage_pct, dedup_ratio ) "
+            "VALUES ( %s, NOW(), %s, %s, %s, %s, %s )",
+            backupserver['id'], data['size'], data['free'], data['allocated'],
+            data['capacity'], data['dedupratio'])
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+    except KeyError, e:
+        #  the "zpool get" command didn't get all the requested items
+        syslog.syslog('Error getting server stats: %s' % str(e))
 
 
 ############################################
 config = db.query('SELECT * FROM config')[0]
-backupserver = db.query('SELECT * FROM backupservers WHERE hostname = %s',
-		os.uname()[1])[0]
+backupserver = db.query(
+    'SELECT * FROM backupservers WHERE hostname = %s', os.uname()[1])[0]
 updateServerStats(backupserver)
-for host in db.query('SELECT * FROM hosts '
-		'WHERE backupserver_id = %s', backupserver['id']):
-	miscDir = os.path.join(backupserver['backup_mountpoint'], host['hostname'],
-			'misc')
-	if not os.path.exists(miscDir):
-		os.makedirs(miscDir)
-	
-	tbsupp.update_usage_stats(db, backupserver, host)
+for host in db.query(
+        'SELECT * FROM hosts WHERE backupserver_id = %s',
+        backupserver['id']):
+    miscDir = os.path.join(
+        backupserver['backup_mountpoint'], host['hostname'], 'misc')
+    if not os.path.exists(miscDir):
+        os.makedirs(miscDir)
+
+    tbsupp.update_usage_stats(db, backupserver, host)

@@ -2,90 +2,96 @@
 #
 #  Ping a host for some period of time and exit success if it is reachable
 
-import sys, os, re, signal, subprocess, time
+import sys
+import os
+import re
+import signal
+import subprocess
+import time
 
 if '-?' in sys.argv or '--help' in sys.argv or len(sys.argv) != 3:
-	sys.stderr.write('usage: %s [LENGTH-OF-TIME] [ADDRESS]\n'
-			% os.path.basename(sys.argv[0]))
-	sys.stderr.write('\n')
-	sys.stderr.write('       Ping ADDRESS for LENGTH-OF-TIME, for example '
-			'"4h".\n')
-	sys.exit(1)
+    sys.stderr.write(
+        'usage: %s [LENGTH-OF-TIME] [ADDRESS]\n'
+        % os.path.basename(sys.argv[0]))
+    sys.stderr.write('\n')
+    sys.stderr.write(
+        '       Ping ADDRESS for LENGTH-OF-TIME, for example "4h".\n')
+    sys.exit(1)
 
 length = sys.argv[1]
 hostname = sys.argv[2]
 
+
 #################
 def find_fping():
-	for path in ['/usr/sbin/fping', '/usr/bin/fping']:
-		if os.path.exists(path):
-			return path
-	return 'fping'
+    for path in ['/usr/sbin/fping', '/usr/bin/fping']:
+        if os.path.exists(path):
+            return path
+    return 'fping'
 
 
 ###################
 def parse_fping(s):
-	ping_count = 0
-	hits = 0
-	misses = 0
-	ping_total = 0.0
-	for i in s.split(':')[1].strip().split():
-		ping_count += 1
-		if i == '-':
-			misses += 1
-			continue
-		ping_total += float(i)
-		hits += 1
-	hit_percent = float(hits) / ping_count
-	ping_average = ping_total / ping_count
-	
-	return locals()
+    ping_count = 0
+    hits = 0
+    misses = 0
+    ping_total = 0.0
+    for i in s.split(':')[1].strip().split():
+        ping_count += 1
+        if i == '-':
+            misses += 1
+            continue
+        ping_total += float(i)
+        hits += 1
+    hit_percent = float(hits) / ping_count
+    ping_average = ping_total / ping_count
+
+    return locals()
 
 
 #########################
 def alarm_handler(*args):
-	sys.exit(1)
+    sys.exit(1)
 
 
 m = re.match(r'^([\d.]+)([hms])$', length)
 if not m:
-	sys.stderr.write('ERROR: Unable to parse length argument.\n   It needs to '
-			'be a number followed by "h" or "m", for example: 8h\n')
-	sys.exit(1)
-length_seconds = float(m.group(1)) * {
-		'h' : 3600, 'm' : 60 }[m.group(2)]
+    sys.stderr.write(
+        'ERROR: Unable to parse length argument.\n   It needs to '
+        'be a number followed by "h" or "m", for example: 8h\n')
+    sys.exit(1)
+length_seconds = float(m.group(1)) * {'h': 3600, 'm': 60}[m.group(2)]
 end_time = time.time() + length_seconds
 
 signal.signal(signal.SIGALRM, alarm_handler)
 signal.alarm(int(length_seconds))
 if hasattr(subprocess, 'check_output'):
-	while True:
-		try:
-			ret = subprocess.check_output([find_fping(), '-C', '10', '-q',
-					hostname], stderr=subprocess.STDOUT)
-			signal.alarm(0)
-			#repr(parse_fping(ret))
-			#{'hits': 10, 'hit_percent': 1.0, 'i': '11.57', 's': '10.55.3.1 : 15.52 16.50 12.15 11.52 15.38 10.92 10.69 16.04 10.99 11.57\n', 'misses': 0, 'ping_average': 13.128, 'ping_total': 131.28, 'ping_count': 10}
-			sys.exit(0)
-		except subprocess.CalledProcessError, e:
-			if e.returncode >= 1:
-				time.sleep(1)
-				continue
-		except OSError, e:
-			sys.stderr.write('Error running "fping": %s\n' % e.args[1])
-			sys.exit(1)
+    while True:
+        try:
+            ret = subprocess.check_output([
+                find_fping(), '-C', '10', '-q',
+                hostname], stderr=subprocess.STDOUT)
+            signal.alarm(0)
+            sys.exit(0)
+        except subprocess.CalledProcessError, e:
+            if e.returncode >= 1:
+                time.sleep(1)
+                continue
+        except OSError, e:
+            sys.stderr.write('Error running "fping": %s\n' % e.args[1])
+            sys.exit(1)
 
-		sys.stderr.write("ERROR: Shouldn't get here!\n")
-		sys.exit(2)
+        sys.stderr.write("ERROR: Shouldn't get here!\n")
+        sys.exit(2)
 
 else:
-	while True:
-		try:
-			if subprocess.call([find_fping(), '-q', hostname]) == 0:
-				signal.alarm(0)
-				sys.exit(0)
-		except OSError, e:
-			sys.stderr.write('Error running "fping": %s\n' % e.args[1])
-			sys.exit(1)
+    while True:
+        try:
+            if subprocess.call([find_fping(), '-q', hostname]) == 0:
+                signal.alarm(0)
+                sys.exit(0)
+        except OSError, e:
+            sys.stderr.write('Error running "fping": %s\n' % e.args[1])
+            sys.exit(1)
 
-		time.sleep(1)
+        time.sleep(1)

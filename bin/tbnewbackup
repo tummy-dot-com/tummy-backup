@@ -2,7 +2,8 @@
 #
 #  Add a machine to be backed up
 
-import sys, os
+import sys
+import os
 sys.path.append('/usr/local/lib/tummy-backup/lib')
 
 import tbsupp
@@ -11,14 +12,16 @@ db.connect()
 
 
 if '-?' in sys.argv or '--help' in sys.argv or len(sys.argv) != 2:
-	sys.stderr.write('usage: %s [HOSTNAME]\n'
-			% os.path.basename(sys.argv[0]))
-	sys.stderr.write('\n')
-	sys.stderr.write('       Create a new backup, the command-line argument '
-			'is the name of\n')
-	sys.stderr.write('       backup, typically the name of the host as you '
-			'would SSH to it.\n')
-	sys.exit(1)
+    sys.stderr.write(
+        'usage: %s [HOSTNAME]\n' % os.path.basename(sys.argv[0]))
+    sys.stderr.write('\n')
+    sys.stderr.write(
+        '       Create a new backup, the command-line argument '
+        'is the name of\n')
+    sys.stderr.write(
+        '       backup, typically the name of the host as you '
+        'would SSH to it.\n')
+    sys.exit(1)
 
 hostname = sys.argv[1]
 
