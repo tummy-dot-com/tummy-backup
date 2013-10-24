@@ -7,4 +7,4 @@ MAILTO=root
 02 12 * * * root /usr/local/lib/tummy-backup/sbin/tbcheckandalert
 03 12 * * * root /usr/local/lib/tummy-backup/sbin/tbexpire
 
-* * * * * root /usr/local/lib/tummy-backup/sbin/listbackupstorun | xargs --max-args=1 --max-procs=8 --no-run-if-empty /usr/local/lib/tummy-backup/sbin/zfsharness
+00 * * * * root /usr/local/lib/tummy-backup/sbin/listbackupstorun | xargs --max-args=1 --max-procs=8 --no-run-if-empty /usr/local/lib/tummy-backup/sbin/zfsharness
