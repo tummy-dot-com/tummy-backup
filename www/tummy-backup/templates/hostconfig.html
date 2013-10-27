@@ -81,19 +81,43 @@
 
                <p>Note: When changing this option, the "authorized_keys"
                file entry for this backup must be updated on the client,
-               the compression option is specified in that file as well as
-               on the server.  Once changed, you will need to go into the
-               "SSH Keys" menu entry here, and <b>replace</b> the existing
-               entry on the client with the new one.</p>
+               or the "backup-client" must be used on the remote machine.
+               rsync alone cannot detect the changing of this parameter.
+               </p>
 
-               <p>If this setting does not match what is on the client,
-               backups will start, but then fail with protocol errors.</p>
+               <p>If using "rsync" instead of "backup-client", and this
+               setting does not match what is on the client, backups will
+               start, but then fail with protocol errors.</p>
                </help></td>
             <td><input type="checkbox"
                name="rsync_do_compress"
                py:attrs="formdata['rsync_do_compress'] and {'checked' : True} or {}"
                /><span py:if="'rsync_do_compress' in errors" class="error">${errors.rsync_do_compress}</span></td>
-               <td>NOTE: Changing requires updating SSH key on client.</td>
+               <td>NOTE: Changing requires backup-client or updating SSH key on client.</td>
+         </tr>
+         <tr>
+            <td><help name="helpbwlimit" label="BWLimit">
+               <h1>Bandwidth Limit</h1>
+               <p>If set, this is a bandwidth limit, in KB/sec that is
+               passed to for rsync sending data from this host.  This is
+               mostly used for hosts reachable across a WAN link to reduce
+               the impact on a limited network connection.</p>
+
+               <p>Note: When changing this option, the "authorized_keys"
+               file entry for this backup must be updated on the client,
+               or the "backup-client" must be used on the remote machine.
+               rsync alone cannot detect the changing of this parameter.
+               </p>
+
+               <p>If using "rsync" instead of "backup-client", and this
+               setting does not match what is on the client, backups will
+               start, but then fail with protocol errors.</p>
+               </help></td>
+            <td><input type="text" size="6"
+                  name="rsync_bwlimit" value="${formdata['rsync_bwlimit']}"
+                  /><span py:if="'rsync_bwlimit' in errors"
+                  class="error">${errors.rsync_bwlimit}</span></td>
+               <td>NOTE: Changing requires backup-client or updating SSH key on client.</td>
          </tr>
          <tr>
             <td><help name="helpfailureintervalbeforewarning" label="Failure interval before warning">
@@ -149,6 +173,28 @@
                   name="retain_monthly" value="${formdata['retain_monthly']}"
                   /><span py:if="'retain_monthly' in errors"
                   class="error">${errors.retain_monthly}</span></td>
+         </tr>
+         <tr>
+            <td><help name="helppriority" label="Priority">
+               <h1>Backup Priority</h1>
+               <p>All other things being equal, backups of a numerically lower
+               priority are run before backups of a numerically larger
+               priority.</p>
+               </help></td>
+            <td><input type="text" size="1"
+                  name="priority" value="${formdata['priority']}"
+                  /><span py:if="'priority' in errors"
+                  class="error">${errors.priority}</span></td>
+            <td><input type="text" size="9"
+                  name="window_start_time"
+                  value="${formdata['window_start_time']}"
+                  /><span py:if="'window_start_time' in errors"
+                  class="error">${errors.window_start_time}</span>
+               <br /><help name="helpwindownow" label="Now:">
+                  <h1>Now</h1><p>Current time on the server, when this
+                  page was loaded, in 24-hour format</p></help>
+                  ${now.strftime('%H:%M')}
+               </td>
          </tr>
          <tr>
             <td><help name="helpwindowstart" label="Window Start">

@@ -159,6 +159,8 @@ class HostConfigValidator(Schema):
     use_global_excludes = validators.StringBoolean(if_missing=False)
     rsync_do_compress = validators.StringBoolean(if_missing=False)
     active = validators.StringBoolean(if_missing=False)
+    rsync_bwlimit = validators.Int(not_empty=False, min=0)
+    priority = validators.Int(not_empty=True, min=0, max=10)
     retain_daily = validators.Int(not_empty=True, min=0)
     retain_weekly = validators.Int(not_empty=True, min=0)
     retain_monthly = validators.Int(not_empty=True, min=0)
@@ -464,6 +466,7 @@ class Root(object):
             for field in [
                     'active', 'use_global_excludes', 'retain_daily',
                     'retain_weekly', 'retain_monthly', 'rsync_do_compress',
+                    'rsync_bwlimit', 'priority',
                     'window_start_time', 'window_end_time', 'failure_warn']:
                 db.query(
                     "UPDATE hosts SET %s = %%s WHERE id = %%s" % field,
