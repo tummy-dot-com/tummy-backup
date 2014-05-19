@@ -15,5 +15,8 @@ for host in db.query(
         "SELECT hostname FROM hosts "
         "WHERE backupserver_id = %s AND "
         "EXTRACT('hour' FROM window_start_time) "
-        "= EXTRACT('hour' from current_time)", backupserver['id']):
+        "= EXTRACT('hour' from current_time) "
+        "AND (SELECT COUNT(*) FROM backups WHERE backup_pid IS NOT NULL "
+        "    AND backups.backupserver_id = hosts.backupserver_id "
+        "    AND backups.host_id = hosts.id) < 1", backupserver['id']):
     print host[0]
