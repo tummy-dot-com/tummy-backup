@@ -12,6 +12,9 @@ unset SSH_AUTH_SOCK
 ENVTMPFILE=`mktemp`
 /usr/local/lib/tummy-backup/sbin/harnessenv "$1" >"$ENVTMPFILE"
 RET=$?
+if [ "$RET" -eq 2 ]; then
+	exit 0
+fi
 if [ "$RET" -ne 0 ]; then
 	echo "ERROR: harnessenv returned $RET instead of 0, aborting backup"
 	exit 1

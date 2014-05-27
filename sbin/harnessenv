@@ -55,8 +55,12 @@ for lock in db.query(
         "WHERE host_id = %s AND backup_pid IS NOT NULL", host['id']):
     try:
         os.kill(lock['backup_pid'], 0)
-        sys.stderr.write('There is already a backup running.\n')
-        sys.exit(1)
+        if os.isatty(2):
+            #  report status to tty, but not when run under cron
+            sys.stderr.write('There is already a backup running.\n')
+            sys.exit(1)
+        #  tell harness to silently exit
+        sys.exit(2)
     except OSError:
         pass
 
