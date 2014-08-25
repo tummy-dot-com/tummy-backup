@@ -1,0 +1,98 @@
+#!/usr/bin/env python
+#
+#  Check for backup issues, and e-mail alert if there are issues
+
+import sys
+import os
+import subprocess
+from optparse import OptionParser
+sys.path.append('/usr/local/lib/tummy-backup/lib')
+
+from psycopgwrap import Database as db
+import tbsupp
+
+
+###############################################
+def getBackupServerSnapshots(db, backupserver):
+    backups = db.query(
+        '''SELECT
+            backups.snapshot_name AS snapshot_name,
+            hosts.hostname AS hostname
+        FROM backups, hosts
+        WHERE backups.backupserver_id = %s AND hosts.id = backups.host_id
+        ORDER BY hostname, snapshot_name
+        ''',
+        backupserver['id'])
+    return ['%s@%s' % (x['hostname'], x['snapshot_name']) for x in backups]
+
+
+#######################################################################
+def lookupBackupIdFromHostnameAndSnapshot(db, hostname, snapshotname):
+    return db.queryone(
+        '''SELECT
+            backups.id AS backup_id
+        FROM backups, hosts
+        WHERE
+            backups.snapshot_name = %s
+            AND hosts.hostname = %s
+            AND hosts.id = backups.host_id
+        ORDER BY hostname, snapshot_name
+        ''', snapshotname, hostname)[0]
+
+
+############################################
+parser = OptionParser()
+parser.add_option(
+    '-v', '--verbose', dest='verbose', default=False,
+    action='store_true',
+    help='Write information about actions to be taken')
+parser.add_option(
+    '--do-destroy', dest='do_destroy', default=False,
+    action='store_true',
+    help='Destroy the backups that have no snapshot.')
+(options, args) = parser.parse_args()
+db.connect()
+
+config = db.query("SELECT * FROM config LIMIT 1")[0]
+backupserver = tbsupp.getThisBackupServer(db)
+tbfsprefix = backupserver['backup_filesystem'] + '/'
+
+pipe = subprocess.Popen((
+    'zfs', 'list', '-Hr', '-t', 'snapshot',
+    backupserver['backup_filesystem']), stdout=subprocess.PIPE,
+    close_fds=True)
+
+zfs_snapshots = [
+    x.split()[0][len(tbfsprefix):] for x in pipe.stdout.readlines()
+    if x.startswith(tbfsprefix)]
+
+database_snapshots = getBackupServerSnapshots(db, backupserver)
+
+missing_snapshots = [x for x in database_snapshots if x not in zfs_snapshots]
+
+if not missing_snapshots:
+    sys.exit(0)
+
+if options.verbose:
+    fp = sys.stdout
+else:
+    fp = os.popen('/usr/sbin/sendmail -t -oi', 'w')
+    fp.write('From: %s\n' % config['mail_to'])
+    fp.write('To: %s\n' % config['mail_to'])
+    fp.write('Subject: Backup snapshots missing on %s\n' % os.uname()[1])
+    fp.write('\n')
+
+fp.write('Backup snapshots missing on %s:\n' % os.uname()[1])
+fp.write('\n')
+fp.write('This indicates that there is a backup but ZFS does not have a\n')
+fp.write('corresponding snapshot.  This probably means that the ZFS\n')
+fp.write('snapshot has been deleted or there is a ZFS problem.\n')
+fp.write('\n')
+fp.write('Snapshot name\n')
+fp.write('==========================================\n')
+for snapshot in missing_snapshots:
+    fp.write('%s\n' % snapshot)
+    if options.do_destroy:
+        backup_id = lookupBackupIdFromHostnameAndSnapshot(
+            db, snapshot.split('@')[0], snapshot.split('@')[1])
+        tbsupp.destroyBackup(db, backup_id)
