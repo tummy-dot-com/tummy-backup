@@ -4,7 +4,10 @@ MAILTO=root
 
 00 12 * * * root /usr/local/lib/tummy-backup/sbin/tbstats
 01 12 * * * root /usr/local/lib/tummy-backup/sbin/tbclean
+#  On reboot, need to wait for other services to come up before cleaning
+@reboot root sleep 60; /usr/local/lib/tummy-backup/sbin/tbclean
 02 12 * * * root /usr/local/lib/tummy-backup/sbin/tbcheckandalert
-03 12 * * * root /usr/local/lib/tummy-backup/sbin/tbexpire
+03 12 * * * root /usr/local/lib/tummy-backup/sbin/tbchecksnapshots
+04 12 * * * root /usr/local/lib/tummy-backup/sbin/tbexpire
 
 00 * * * * root /usr/local/lib/tummy-backup/sbin/listbackupstorun | xargs --max-args=1 --max-procs=8 --no-run-if-empty /usr/local/lib/tummy-backup/sbin/zfsharness

@@ -19,7 +19,10 @@ def getBackupServerSnapshots(db, backupserver):
             backups.snapshot_name AS snapshot_name,
             hosts.hostname AS hostname
         FROM backups, hosts
-        WHERE backups.backupserver_id = %s AND hosts.id = backups.host_id
+        WHERE
+            backups.backupserver_id = %s
+            AND hosts.id = backups.host_id
+            AND backups.backup_pid IS NULL
         ORDER BY hostname, snapshot_name
         ''',
         backupserver['id'])
