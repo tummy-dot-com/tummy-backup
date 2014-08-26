@@ -2,7 +2,7 @@
 #
 #  tummy-backup program that runs the backups for each individual host.
 
-PATH=$PATH:/usr/local/sbin
+PATH=$PATH:/usr/local/sbin:/sbin
 RSYNC_RETURNCODE=NULL
 SUCCESSFUL=f
 
