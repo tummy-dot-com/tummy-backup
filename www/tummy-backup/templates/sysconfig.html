@@ -56,6 +56,36 @@
                   /><span py:if="'failure_warn' in errors"
                   class="error">${errors.failure_warn}</span></td>
          </tr>
+         <tr>
+            <td><help name="helprsync_timeout" label="Rsync Timeout">
+               <h1>Rsync Timeout</h1>
+               <p>The number of seconds of inactivity before rsync will
+	       timeout and abort the backup.  Often this can happen when the
+	       remote system has rsync versions prior to 3.0, or just has a
+	       very large number of files in a single directory or is heavily
+	       utilized.  The default is 7200 (2 hours).  </p>
+            </help></td>
+            <td>
+                  <input type="text" size="11"
+                  name="rsync_timeout" value="${formdata['rsync_timeout']}"
+                  /><span py:if="'rsync_timeout' in errors"
+                  class="error">${errors.rsync_timeout}</span></td>
+         </tr>
+         <tr>
+            <td><help name="helprsync_username" label="Rsync Username">
+               <h1>Rsync Username</h1>
+               <p>The username to use on the remote system for the
+               rsync-over-SSH connection.  This defaults to "root", but
+               can be another user account.  You will probably have to
+               use the "backup-client" package or similar to allow this
+               user to start the rsync process as root.</p>
+            </help></td>
+            <td>
+                  <input type="text" size="11"
+                  name="rsync_username" value="${formdata['rsync_username']}"
+                  /><span py:if="'rsync_username' in errors"
+                  class="error">${errors.rsync_username}</span></td>
+         </tr>
        </table>
     </form>
   </span>

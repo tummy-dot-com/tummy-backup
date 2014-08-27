@@ -39,6 +39,7 @@ def describe_rsync_exit_code(code):
     if code is None:
         return ''
     return_code_descriptions = {
+        -5: 'Snapshot failed',
         -4: '"Kill Backup" marked this as a dead backup',
         -3: 'tbclean marked this as a dead backup',
         -2: 'zfsharness received INT signal',

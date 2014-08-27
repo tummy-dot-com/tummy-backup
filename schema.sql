@@ -4,6 +4,8 @@ CREATE TABLE config (
    id INTEGER UNIQUE DEFAULT 1,
    mail_to TEXT DEFAULT NULL,
    failure_warn INTERVAL DEFAULT '3 days' NOT NULL,
+   rsync_timeout INTEGER DEFAULT 7200 NOT NULL,
+   rsync_username TEXT DEFAULT 'root' NOT NULL,
    CHECK (id = 1)
    );
 ALTER TABLE config OWNER TO tummybackup;

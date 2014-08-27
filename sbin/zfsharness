@@ -68,6 +68,14 @@ if [ "${BWLIMITARG:-unset}" = unset ]
 then
 	BWLIMITARG=
 fi
+if [ "${RSYNC_TIMEOUT:-unset}" = unset ]
+then
+	RSYNC_TIMEOUT=7200
+fi
+if [ "${RSYNC_USERNAME:-unset}" = unset ]
+then
+	RSYNC_USERNAME=root
+fi
 
 #  get into backup directory
 cd "$DIR"
@@ -101,8 +109,8 @@ rsync -e 'ssh -i ../keys/backup-identity' --delete --delete-excluded \
 		--ignore-errors \
 		--hard-links \
 		--itemize-changes \
-		--timeout=3600 \
-		--numeric-ids -av root@${HOSTNAME}:/ .
+		--timeout="$RSYNC_TIMEOUT" \
+		--numeric-ids -av "$RSYNC_USERNAME"@${HOSTNAME}:/ .
 #  These are other options we might want to use for backups, but need further
 #  investigation to determine: Are they supported for a ZFS destination,
 #  are they supported by the different rsyncs we have in production, do they
@@ -114,7 +122,16 @@ RSYNC_RETURNCODE="$?"
 RSYNC_END_TIME=`date +%s`
 echo RSYNC_RETURNCODE="$RSYNC_RETURNCODE"
 
+#  make snapshot
+zfs snapshot "$BACKUP_ZFS_FILESYSTEM/$HOSTNAME@$SNAPSHOTNAME"
+SNAPSHOT_RETURNCODE="$?"
+echo SNAPSHOT_RETURNCODE="$SNAPSHOT_RETURNCODE"
+
 [ "$RSYNC_RETURNCODE" -eq 0 -o "$RSYNC_RETURNCODE" -eq 23 -o "$RSYNC_RETURNCODE" -eq 24 ] && SUCCESSFUL=t
+if [ "$SUCCESSFUL" = t -a "$SNAPSHOT_RETURNCODE" -ne 0 ]; then
+	RSYNC_RETURNCODE=-5
+	SUCCESSFUL=f
+fi
 
 exec >"$DIR/logs/status.out" 2>&1
 echo ==========================
@@ -122,11 +139,8 @@ echo "Started at $START_DATE"
 echo "Done $HOSTNAME" `date`
 echo "Elapsed time: $[RSYNC_END_TIME-RSYNC_START_TIME]"
 echo RSYNC_RETURNCODE="$RSYNC_RETURNCODE"
+echo SNAPSHOT_RETURNCODE="$SNAPSHOT_RETURNCODE"
 echo BACKUP_ID="$BACKUP_ID"
-
-#  make snapshot
-exec >"$DIR/logs/snapshot.out" 2>&1
-zfs snapshot "$BACKUP_ZFS_FILESYSTEM/$HOSTNAME@$SNAPSHOTNAME"
 
 #  make snapshot clone
 #if [ -d "${DIR}"/snapshots ]

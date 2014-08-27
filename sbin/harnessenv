@@ -70,6 +70,8 @@ for lock in db.query(
     db.commit()
 
 print 'MAILTO="%s"' % config['mail_to']
+print 'RSYNC_TIMEOUT="%s"' % config['rsync_timeout']
+print 'RSYNC_USERNAME="%s"' % config['rsync_username']
 print 'HOSTNAME="%s"' % host['hostname']
 print 'ACTIVE="%s"' % (host['active'] and '1' or '0')
 print 'BACKUP_ZFS_POOL="%s"' % backupserver['backup_pool']

@@ -174,6 +174,9 @@ class SystemConfigValidator(Schema):
     mail_to = validators.Email()
     failure_warn = validators.Wrapper(
         validate_python=validateFailureWarn, not_empty=False)
+    rsync_timeout = validators.Int(not_empty=True, min=60, max=160000)
+    rsync_username = validators.String(
+        not_empty=True, strip=True, min=1, max=40)
 
 
 class Root(object):
@@ -273,7 +276,9 @@ class Root(object):
         errors, formdata = processform(SystemConfigValidator(), config, kwargs)
 
         if cherrypy.request.method == 'POST' and not errors:
-            for field in ['mail_to', 'failure_warn']:
+            for field in [
+                    'mail_to', 'failure_warn', 'rsync_timeout',
+                    'rsync_username']:
                 db.query(
                     "UPDATE config SET %s = %%s" % field, formdata[field])
             db.commit()
