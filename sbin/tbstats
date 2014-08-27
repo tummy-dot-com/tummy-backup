@@ -35,7 +35,8 @@ def updateServerStats(backupserver):
             'M': 1000000,
             'G': 1000000000,
             'T': 1000000000000}[fields[2][-1]]
-    fp.close()
+    fp.stdout.close()
+    fp.wait()
 
     try:
         db.query(
