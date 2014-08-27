@@ -20,7 +20,7 @@ def updateServerStats(backupserver):
         os.makedirs(varDir)
 
     fp = tbsupp.popen((
-        'zfs', 'get', 'size,capacity,dedupratio,free,allocated',
+        'zpool', 'get', 'size,capacity,dedupratio,free,allocated',
         backupserver['backup_pool']),
         stdout=subprocess.PIPE, close_fds=True)
     data = {}
