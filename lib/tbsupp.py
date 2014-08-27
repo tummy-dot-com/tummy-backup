@@ -6,6 +6,7 @@ import os
 import sys
 from psycopgwrap import IntegrityError
 import tbsupp
+import subprocess
 
 
 ######################
@@ -251,13 +252,22 @@ def hostDirs(db, hostname):
     return(hostDir)
 
 
+###########################
+def popen(*args, **kwargs):
+    '''Wrapper around subprocess.Popen that adds sbin to path.'''
+
+    add_to_path = ':/usr/sbin:/sbin:/usr/local/sbin:/usr/local/bin'
+    if not os.environ['PATH'].endswith(add_to_path):
+        os.environ['PATH'] += add_to_path
+
+    return subprocess.Popen(*args, **kwargs)
+
+
 #######################################################
 def runZfsDestroy(filesystem, args=tuple(), retries=0):
-    import subprocess
-
     #  skip a file-system/snapshot that doesn't exist
     cmd = ('zfs', 'list', filesystem)
-    pipe = subprocess.Popen(
+    pipe = popen(
         cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
     stdout, stderr = pipe.communicate()
 
@@ -268,7 +278,7 @@ def runZfsDestroy(filesystem, args=tuple(), retries=0):
         retries = retries - 1
 
         cmd = ('zfs', 'destroy') + args + (filesystem,)
-        pipe = subprocess.Popen(
+        pipe = popen(
             cmd, stdout=subprocess.PIPE,
             stderr=subprocess.PIPE, close_fds=True)
         stdout, stderr = pipe.communicate()
@@ -353,8 +363,6 @@ def lookupBackupServer(
 
 ###########################################
 def runWebCmd(backupserverrecord, command):
-    import subprocess
-
     class SubprocessStillRunningError(Exception):
         '''The child process is still running when we don't expect it to be.'''
         pass
@@ -402,7 +410,7 @@ def runWebCmd(backupserverrecord, command):
         'ssh', '-i', '/usr/local/lib/tummy-backup/www/keys/identity',
         'root@%s' % backupserverrecord['hostname'],
         '/usr/local/lib/tummy-backup/sbin/webcmd']
-    pipe = subprocess.Popen(
+    pipe = popen(
         sshcmd, stdout=subprocess.PIPE,
         stdin=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
     pipe.stdin.write(command)

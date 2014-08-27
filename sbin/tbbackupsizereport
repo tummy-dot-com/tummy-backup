@@ -3,12 +3,8 @@
 #  Print to stdout a report of server name and MB used.
 
 import sys
-import os
 import time
 sys.path.append('/usr/local/lib/tummy-backup/lib')
-os.environ['PATH'] = (
-    os.environ['PATH'] +
-    ':/usr/sbin:/sbin:/usr/local/sbin:/usr/local/bin')
 
 from psycopgwrap import Database as db
 db.connect()
@@ -18,7 +14,7 @@ db.connect()
 now = time.time()
 for host in db.query(
         "SELECT * FROM hosts WHERE active = 't' ORDER BY hostname;"):
-    #  new hsots have no space used
+    #  new hosts have no space used
     if (
             host['space_used_snapshots'] is None or
             host['space_used_dataset'] is None):

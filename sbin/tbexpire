@@ -3,12 +3,8 @@
 #  Look for backups that can be removed
 
 import sys
-import os
 from optparse import OptionParser
 sys.path.append('/usr/local/lib/tummy-backup/lib')
-os.environ['PATH'] = (
-    os.environ['PATH'] +
-    ':/usr/sbin:/sbin:/usr/local/sbin:/usr/local/bin')
 
 from psycopgwrap import Database as db
 import tbsupp

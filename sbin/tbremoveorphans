@@ -4,15 +4,11 @@
 #  not in the database.
 
 import sys
-import os
 import subprocess
 import re
 
 from optparse import OptionParser
 sys.path.append('/usr/local/lib/tummy-backup/lib')
-os.environ['PATH'] = (
-    os.environ['PATH'] +
-    ':/usr/sbin:/sbin:/usr/local/sbin:/usr/local/bin')
 
 from psycopgwrap import Database as db
 import tbsupp
@@ -35,7 +31,7 @@ config = db.query('SELECT * FROM config')[0]
 backupserver = tbsupp.getThisBackupServer(db)
 tbfsprefix = backupserver['backup_filesystem'] + '/'
 
-pipe = subprocess.Popen((
+pipe = tbsupp.popen((
     'zfs', 'list', '-Hr', '-t', 'snapshot',
     backupserver['backup_filesystem']), stdout=subprocess.PIPE,
     close_fds=True)
@@ -67,6 +63,6 @@ for line in pipe.stdout.readlines():
     if options.dryrun:
         continue
 
-    destroyPipe = subprocess.Popen((
+    destroyPipe = tbsupp.popen((
         'zfs', 'destroy', '-R', fsname), close_fds=True)
     destroyPipe.communicate()

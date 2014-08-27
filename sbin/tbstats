@@ -3,10 +3,9 @@
 #  Write out usage stats for the backups
 
 import os
+import subprocess
 import sys
 sys.path.append('/usr/local/lib/tummy-backup/lib')
-os.environ['PATH'] = (
-    os.environ['PATH'] + ':/usr/sbin:/sbin:/usr/local/sbin:/usr/local/bin')
 import tbsupp
 import syslog
 
@@ -20,11 +19,12 @@ def updateServerStats(backupserver):
     if not os.path.exists(varDir):
         os.makedirs(varDir)
 
-    fp = os.popen(
-        "zpool get size,capacity,dedupratio,free,allocated '%s' "
-        "2>/dev/null" % backupserver['backup_pool'], 'r')
+    fp = tbsupp.popen((
+        'zfs', 'get', 'size,capacity,dedupratio,free,allocated',
+        backupserver['backup_pool']),
+        stdout=subprocess.PIPE, close_fds=True)
     data = {}
-    for line in fp.readlines():
+    for line in fp.stdout.readlines():
         fields = line.strip().split()
         if fields[0] == 'NAME':
             continue

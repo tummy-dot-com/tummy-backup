@@ -60,7 +60,7 @@ config = db.query("SELECT * FROM config LIMIT 1")[0]
 backupserver = tbsupp.getThisBackupServer(db)
 tbfsprefix = backupserver['backup_filesystem'] + '/'
 
-pipe = subprocess.Popen((
+pipe = tbsupp.popen((
     'zfs', 'list', '-Hr', '-t', 'snapshot',
     backupserver['backup_filesystem']), stdout=subprocess.PIPE,
     close_fds=True)
