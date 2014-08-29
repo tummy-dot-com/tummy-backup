@@ -9,60 +9,49 @@
     <xi:include href="include-tablesorter.html" />
     <xi:include href="include-jqplot.html" />
     <xi:include href="include-notice.html" />
+    <link href="${url('/static/c3.css')}" rel="stylesheet" type="text/css"></link>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="${url('/static/c3.min.js')}"></script>
 
     <script>
       $(document).ready(function()
          {
-         datagraphdata = ${datagraphdatajs};
-         snapgraphdata = ${snapgraphdatajs};
-         yticks = ${yticks};
-         $.jqplot.config.enablePlugins = true;
-         $.jqplot('chartdiv',  [datagraphdata, snapgraphdata],
-            {
-            axes:{
-               xaxis:{
-                  renderer:$.jqplot.DateAxisRenderer,
-                  tickOptions:{formatString:'%b %d'},
-                  },
-               yaxis:{
-                  min:0,
-                  ticks: yticks,
-                  tickOptions:{formatString:'%d'},
-                  //tickOptions:{formatString:'%dGB'},
-                  //max:100,
-                  },
-               },
-            series:[
-               {color:'darkslateblue', fillColor: 'slateblue', },
-               {color:'darkgoldenrod', fillColor: 'goldenrod', },
-               ],
-            stackSeries: true,
-            seriesDefaults: {
-               shadow: false,
-               showMarker: false,
-               showLine: true,
-               fill: true,
-               rendererOptions: {
-                  highlightMouseOver: false,
-                  },
-               fillAndStroke: true,
-               },
-            cursor: {
-               showCursorLegend:false,
-               zoom: false,
-               clickReset: true,
-               showVerticalLine:true,
-               showTooltip: true,
-               showTooltipDataPosition: true,
-               },
-            });
+         var chart = c3.generate({
+             data: {
+                 x : 'Date',
+                 columns: [
+                     ['Date', ${dategraphdatajs}],
+                     ['Data', ${datagraphdatajs}],
+                     ['Snapshots', ${snapgraphdatajs}],
+                 ],
+                 types: {
+                     Data: 'area',
+                 },
+                 groups: [['Data', 'Snapshots']]
+             },
+             axis : {
+                 x : {
+                     type: 'timeseries',
+                     tick: {
+                         count: 10,
+                         culling: { max: 6 },
+                         format: "%b %e, %Y"
+                     }
+                 },
+                 y : {
+                     tick: {
+                         format: d3.format("s")
+                     }
+                 },
+             }
+         });
          });
     </script>
   </span>
 
   <span py:match="template_body" py:strip="">
 
-    <div id="chartdiv" style="width:600px;height:200px; "></div>
+    <div id="chart" style="width:600px;height:200px; "></div>
     <h2>Stored on: ${server['hostname']}</h2>
 
     <py:if test="mostrecentbackup and mostrecentbackup['backup_pid']">

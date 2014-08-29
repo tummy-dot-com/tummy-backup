@@ -363,8 +363,9 @@ class Root(object):
             "WHERE host_id = %s ORDER BY id DESC LIMIT 1", host['id'])
         from tbsupp import describe_rsync_exit_code  #  NOQA
 
-        datagraphdatajs = '['
-        snapgraphdatajs = '['
+        dategraphdatajs = ''
+        datagraphdatajs = ''
+        snapgraphdatajs = ''
         maxSize = 0
         for row in db.query(
                 "SELECT "
@@ -373,20 +374,17 @@ class Root(object):
                 "FROM backupusage "
                 "WHERE host_id = %s "
                 "GROUP BY sample_date ORDER BY sample_date;", host['id']):
-            datagraphdatajs += '["%s",%s],' % (
-                row['sample_date'].strftime('%Y/%m/%d'),
-                row['used_by_dataset'])
-            snapgraphdatajs += '["%s",%s],' % (
-                row['sample_date'].strftime('%Y/%m/%d'),
-                row['used_by_snapshots'])
+            dategraphdatajs += '"%s",' % (
+                row['sample_date'].strftime('%Y-%m-%d'))
+            datagraphdatajs += '%d,' % row['used_by_dataset']
+            snapgraphdatajs += '%d,' % row['used_by_snapshots']
             total = row['used_by_snapshots'] + row['used_by_dataset']
             if total > maxSize:
                 maxSize = total
         if datagraphdatajs == '[':
-            datagraphdatajs += '["%s",0]' % time.strftime('%Y/%m/%d')
-            snapgraphdatajs = datagraphdatajs
-        datagraphdatajs += ']'
-        snapgraphdatajs += ']'
+            dategraphdatajs = '"%s"' % time.strftime('%Y/%m/%d')
+            datagraphdatajs = '0,'
+            snapgraphdatajs = '0,'
 
         yticks = '['
         sizel = [
