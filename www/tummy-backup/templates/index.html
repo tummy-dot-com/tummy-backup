@@ -6,6 +6,9 @@
     <xi:include href="include-jquery.html" />
     <xi:include href="include-tablesorter.html" />
     <xi:include href="include-jqplot.html" />
+    <link href="static/c3.css" rel="stylesheet" type="text/css"></link>
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="static/c3.min.js"></script>
 
     <script>
       $.tablesorter.addParser({
@@ -27,49 +30,29 @@
       $(document).ready(function()
          {
          $("#hostTable").tablesorter({ headers: { 4: { sorter:'daysago' } } });
-         graphdata = [${graphdatajs},${graphdatajsmax}];
-         $.jqplot.config.enablePlugins = true;
-         $.jqplot('chartdiv', graphdata,
-            {
-            axes:{
-               xaxis:{
-                  renderer:$.jqplot.DateAxisRenderer,
-                  tickOptions:{formatString:'%b %d'},
-                  },
-               yaxis:{min:0,max:100},
-               },
-            seriesDefaults: {
-               shadow: false,
-               showMarker: false,
-               showLine: true,
-               rendererOptions: {
-                  highlightMouseOver: false,
-                  },
-               fillAndStroke: true,
-               },
-            series: [
-               {
-                  label: 'Average',
-                  fill: true,
-                  fillColor: 'lightsteelblue',
-                  color: 'steelblue',
-                  },
-               {
-                  label: 'Maximum',
-                  fill: false,
-                  color: '#B54984',
-                  },
-               ],
-            legend: { location: 'nw' },
-            cursor: {
-               showCursorLegend: true,
-               showTooltip: false,
-               zoom: false,
-               clickReset: true,
-               showVerticalLine: true,
-               showTooltipDataPosition: true,
-               },
-            });
+         var chart = c3.generate({
+             data: {
+                 x : 'Date',
+                 columns: [
+                     ['Date', ${graphdate}],
+                     ['Average', ${graphdatajs}],
+                     ['Max', ${graphdatajsmax}],
+                 ],
+                 types: {
+                     Average: 'area',
+                 },
+             },
+             axis : {
+                 x : {
+                     type: 'timeseries',
+                     tick: {
+                         count: 10,
+                         culling: { max: 6 },
+                         format: "%e-%b-%y"
+                     }
+                 },
+             }
+         });
          });
     </script>
     <style type="text/css">
@@ -84,7 +67,7 @@
 
   <span py:match="template_body" py:strip="">
 
-    <div id="chartdiv" style="width:600px;height:200px; "></div>
+    <div id="chart" style="width:600px;height:200px; "></div>
 
 <py:if test="len(active_backups) > 0">
     <h2>Active Backups:</h2>

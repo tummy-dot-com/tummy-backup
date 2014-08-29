@@ -214,18 +214,19 @@ class Root(object):
             "ORDER BY backups.start_time"))
         title = 'Tummy-Backup'
 
-        graphdatajs = '['
-        graphdatajsmax = '['
+        graphdate = ''
+        graphdatajs = ''
+        graphdatajsmax = ''
         for row in db.query(
                 "SELECT sample_date, AVG(usage_pct) AS usage_pct, "
                 "MAX(usage_pct) as max_usage_pct "
                 "FROM serverusage GROUP BY sample_date ORDER BY sample_date;"):
-            graphdatajs += '["%s",%.1f],' % (
-                row['sample_date'].strftime('%Y/%m/%d'), row['usage_pct'])
-            graphdatajsmax += '["%s",%s],' % (
-                row['sample_date'].strftime('%Y/%m/%d'), row['max_usage_pct'])
-        graphdatajs += ']'
-        graphdatajsmax += ']'
+            graphdate += '"%s",' % row['sample_date'].strftime('%Y-%m-%d')
+            graphdatajs += '%.1f,' % row['usage_pct']
+            graphdatajsmax += '%.1f,' % row['max_usage_pct']
+        graphdate += ''
+        graphdatajs += ''
+        graphdatajsmax += ''
 
         tmpl = loader.load('index.html')
         return tmpl.generate(contextFromLocals(locals())).render(
