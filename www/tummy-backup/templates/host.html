@@ -7,11 +7,8 @@
   <span py:match="template_head" py:strip="">
     <xi:include href="include-jquery.html" />
     <xi:include href="include-tablesorter.html" />
-    <xi:include href="include-jqplot.html" />
     <xi:include href="include-notice.html" />
-    <link href="${url('/static/c3.css')}" rel="stylesheet" type="text/css"></link>
-    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-    <script src="${url('/static/c3.min.js')}"></script>
+    <xi:include href="include-c3.html" />
 
     <script>
       $(document).ready(function()
