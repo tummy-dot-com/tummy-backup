@@ -52,7 +52,10 @@ Tuning ZFS
       zfs set dedup=verify backups
 
    However, deduplication can be very hard on the system.  It needs plenty of
-   RAM, probably at least 8GB, and ideally should have a L2ARC device on SSD:
+   RAM, probably at least 8GB (for a small home backup server).  My work backup
+   server would need 64GB to be happy with dedup.
+   
+   Ideally it should have a L2ARC device on SSD:
 
       zpool add backups cache SSD_DEV_FILE
 
