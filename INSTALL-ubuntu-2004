@@ -1,0 +1,119 @@
+These instructions were created on Ubuntu 20.04.
+
+ZFS in 20.04 is included in the base repos, so all you need to do
+to install it is:
+
+    apt install zfs-dkms zfsutils-linux
+
+Create ZFS pool for backups:
+
+   You will need one or more device partitions to store the ZFS on.  Ideally,
+   you would give ZFS a number of raw devices rather than a RAID array device.
+   Best performance is if you use the full device ("/dev/sda" rather than
+   "/dev/sda1").
+
+   For device names, you typically want to use the device files in
+   /dev/disk/by-id.
+
+   If you have one big device, use:
+
+      zpool create -o ashift=12 backups DEV_FILE
+
+   If you have many devices and want to be able to survive a single device
+   failure:
+
+      zpool create -o ashift=12 backups raidz DEV_FILE [...]
+
+
+   If you want to be able to survive 2 device failures, at the cost of losing
+   two discs worth of storage capacity:
+
+      zpool create -o ashift=12 backups raidz2 DEV_FILE [...]
+
+Tuning ZFS
+
+   You probably want to enable compression:
+
+      zfs set compression=on backups
+
+   You *MIGHT* want to set deduplication:
+
+      zfs set dedup=verify backups
+
+   However, deduplication can be very hard on the system.  It needs plenty of
+   RAM, probably at least 8GB (for a small home backup server).  My work backup
+   server would need 64GB to be happy with dedup.
+   
+   Ideally it should have a L2ARC device on SSD:
+
+      zpool add backups cache SSD_DEV_FILE
+
+Install Requirements
+
+   apt-get install python3-psycopg2 libapache2-mod-wsgi-py3 postgresql mailutils \
+         python3-cherrypy3 python3-routes python3-genshi python3-formencode
+
+Install tummy-backup Master
+
+   mkdir -p /etc/tummy-backup
+   echo dbname=tummybackup user=tummybackup password=PASSWORD host=127.0.0.1 >/etc/tummy-backup/dbconnect
+   chmod 640 /etc/tummy-backup/dbconnect
+   chown root:www-data /etc/tummy-backup/dbconnect
+
+   su postgres -c 'createuser -DRSP tummybackup'
+   <Enter the password from above>
+   su postgres -c 'createdb -O tummybackup tummybackup'
+   su postgres -c 'psql -d tummybackup --quiet' <schema.sql
+
+   mkdir /usr/local/lib/tummy-backup
+   cp -av . /usr/local/lib/tummy-backup
+   cd /usr/local/lib/tummy-backup
+   mkdir www/keys
+   ssh-keygen -t dsa -N '' -f www/keys/identity
+   chown www-data:www-data www/keys/identity
+   chmod 400 www/keys/identity
+   chown www-data:www-data www/keys
+   chmod 700 www/keys
+
+   cp files/apache-tummy-backup.conf /etc/apache2/conf-enabled/tummy-backup.conf
+   /etc/init.d/apache2 restart
+
+   htpasswd -c /etc/tummy-backup/htpasswd admin
+   <Enter a password for the web interface>
+
+   Add the "www/keys/identity.pub" data to /root/.ssh/authorized_keys prefixed
+   by this, with the key at the end of the second line:
+
+      #  for tummy-backup webcmd
+      no-pty,no-agent-forwarding,no-X11-forwarding,no-port-forwarding,command="/usr/local/lib/tummy-backup/sbin/webcmd"
+
+   Test this by running:
+
+      echo ping | SSH_AUTH_SOCK= ssh -i /usr/local/lib/tummy-backup/www/keys/identity root@`hostname` true
+
+   Test the web interface by running:
+
+       python3 /usr/local/lib/tummy-backup/www/tummy-backup/controller.py
+
+   It should display a bunch of HTML, if it generates any exceptions, they
+   will need to be fixed.
+
+   This might ask you to verify the host key, and then it should respond with
+   "Pong".  If it does not, there is a problem that will prevent the web
+   interface from working.
+
+   The host key also needs to be available to the web server user.  Probably
+   the best way to do this is to:
+
+      cp /root/.ssh/known_hosts /etc/ssh/ssh_known_hosts
+      chmod 644 /etc/ssh/ssh_known_hosts
+
+   cp files/cron-tummy-backup-master /etc/cron.d/tummy-backup-master
+
+Install tummy-backup Node
+
+   [THESE NOTES ARE INCOMPLETE, I HAVEN'T DONE A NEW NODE-ONLY SETUP]
+
+   mkdir /usr/local/lib/tummy-backup
+   cp -av . /usr/local/lib/tummy-backup
+
