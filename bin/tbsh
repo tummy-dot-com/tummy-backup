@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #  Given a backup, this will start a shell in that snapshot
 
@@ -39,12 +39,12 @@ sys.stdout.flush()
 dataDirName = os.path.join(tbsupp.mountSnapshot(db, backup['id']), 'data')
 sys.stdout.write((' ' * 75) + '\r')
 os.chdir(dataDirName)
-print
-print '*' * 60
-print 'NOTE: Running a sub-shell in the data directory.'
-print 'NOTE: You are not chrooted in here, you can cd up...'
-print '*' * 60
-print
-print 'Logs are in ../logs'
-print 'Type "exit" when done with this shell.'
+print()
+print('*' * 60)
+print('NOTE: Running a sub-shell in the data directory.')
+print('NOTE: You are not chrooted in here, you can cd up...')
+print('*' * 60)
+print()
+print('Logs are in ../logs')
+print('Type "exit" when done with this shell.')
 os.system('bash')

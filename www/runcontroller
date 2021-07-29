@@ -1,3 +1,3 @@
 #!/bin/sh
 
-python tummy-backup/controller.py
+python3 tummy-backup/controller.py

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #  Run a command for the web interface
 
@@ -37,19 +37,19 @@ def cmdLogfiles(args):
     logList = ['status.out', 'snapshot.out', 'rsync.out']
     for file in [os.path.join(logDirName, x) for x in logList]:
         sys.stdout.flush()
-        print '<h2>%s:</h2>' % os.path.basename(file)
-        print '<p /><pre>'
+        print('<h2>%s:</h2>' % os.path.basename(file))
+        print('<p /><pre>')
         if not os.path.exists(file):
-            print '[File does not exist]'
+            print('[File does not exist]')
             continue
         fp = open(file, 'r')
         while True:
             data = fp.read(10240)
             if not data:
                 break
-            print cgi.escape(data)
+            print(cgi.escape(data))
         fp.close()
-        print '</pre>'
+        print('</pre>')
     sys.exit(0)
 
 
@@ -282,7 +282,7 @@ def cmdDestroybackup(args):
 
 ##################
 def cmdPing(args):
-    print 'Pong'
+    print('Pong')
 
 
 ##########################

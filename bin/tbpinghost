@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #  Ping a host for some period of time and exit success if it is reachable
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #  Print to stdout a report of server name and MB used.
 
@@ -20,6 +20,6 @@ for host in db.query(
             host['space_used_dataset'] is None):
         continue
 
-    print '%s %d' % (host['hostname'], (
+    print('%s %d' % (host['hostname'], (
         host['space_used_snapshots']
-        + host['space_used_dataset']) / 1024 / 1024)
+        + host['space_used_dataset']) / 1024 / 1024))

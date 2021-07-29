@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #  Remove a host from the backup server
 
@@ -27,4 +27,4 @@ hostname = sys.argv[1]
 
 tbsupp.destroyHost(db, hostname)
 
-print 'Done'
+print('Done')

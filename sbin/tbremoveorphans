@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #  Look at zfs file-systems for backups that exist in the file-system but
 #  not in the database.
@@ -48,7 +48,7 @@ for line in pipe.stdout.readlines():
             r'\d\d\d\d-\d\d-\d\d\.\d\d\d\d\d\d\.(monthly|weekly|daily)',
             snapshotname):
         if options.verbose:
-            print 'Skipping snapshot due to name mismatch: "%s"' % fsname
+            print('Skipping snapshot due to name mismatch: "%s"' % fsname)
         continue
 
     matches = db.queryone(
@@ -59,7 +59,7 @@ for line in pipe.stdout.readlines():
     if matches > 0:
         continue
     if options.verbose:
-        print 'Destroying %s' % fsname
+        print('Destroying %s' % fsname)
     if options.dryrun:
         continue
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #  List information about the backups and hosts
 
@@ -28,12 +28,12 @@ if '-?' in sys.argv or '--help' in sys.argv:
 if len(sys.argv) == 2:
     host = db.queryone("SELECT * FROM hosts WHERE hostname = %s", sys.argv[1])
     if host:
-        print 'ID      Snapshot Name'
-        print '======= ================================'
+        print('ID      Snapshot Name')
+        print('======= ================================')
         for backup in db.query(
                 "SELECT * FROM backups "
                 "WHERE host_id = %s ORDER BY id DESC", host['id']):
-            print '%-7s %s' % (backup['id'], backup['snapshot_name'])
+            print('%-7s %s' % (backup['id'], backup['snapshot_name']))
         sys.exit(0)
 
     backup = db.queryone(
@@ -42,21 +42,21 @@ if len(sys.argv) == 2:
         backup = db.queryone(
             "SELECT * FROM backups WHERE id = %s", int(sys.argv[1]))
     if backup:
-        print 'ID: %(id)s' % backup
-        print 'Host: %s' % db.queryone(
-            "SELECT hostname FROM hosts WHERE id = %s", backup['host_id'])[0]
-        print 'Generation: %(generation)s' % backup
-        print 'Successful: %(successful)s' % backup
-        print 'Start Time: %(start_time)s' % backup
-        print 'End Time: %(end_time)s' % backup
-        print 'Rsync Returncode: %s (%s)' % (
+        print('ID: %(id)s' % backup)
+        print('Host: %s' % db.queryone(
+            "SELECT hostname FROM hosts WHERE id = %s", backup['host_id'])[0])
+        print('Generation: %(generation)s' % backup)
+        print('Successful: %(successful)s' % backup)
+        print('Start Time: %(start_time)s' % backup)
+        print('End Time: %(end_time)s' % backup)
+        print('Rsync Returncode: %s (%s)' % ()
             backup['rsync_returncode'],
             tbsupp.describe_rsync_exit_code(backup['rsync_returncode']))
-        print 'Snapshot Name: %(snapshot_name)s' % backup
+        print('Snapshot Name: %(snapshot_name)s' % backup)
         sys.exit(0)
 
 #  list hosts
-print 'Hostname:'
-print '=' * 20
+print('Hostname:')
+print('=' * 20)
 for host in db.query('SELECT * FROM hosts ORDER BY hostname'):
-    print host['hostname']
+    print(host['hostname'])
