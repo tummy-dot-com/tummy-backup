@@ -86,7 +86,7 @@ Install tummy-backup Master
    chown www-data:www-data www/keys
    chmod 700 www/keys
 
-   cp files/apache-tummy-backup.conf /etc/apache2/conf.d/tummy-backup.conf
+   cp files/apache-tummy-backup.conf /etc/apache2/conf-enabled/tummy-backup.conf
    /etc/init.d/apache2 restart
 
    htpasswd -c /etc/tummy-backup/htpasswd admin

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #  Print out a shell environment for a backup to run
 
@@ -69,20 +69,20 @@ for lock in db.query(
         "WHERE id = %s", lock['id'])
     db.commit()
 
-print 'MAILTO="%s"' % config['mail_to']
-print 'RSYNC_TIMEOUT="%s"' % config['rsync_timeout']
-print 'RSYNC_USERNAME="%s"' % config['rsync_username']
-print 'HOSTNAME="%s"' % host['hostname']
-print 'ACTIVE="%s"' % (host['active'] and '1' or '0')
-print 'BACKUP_ZFS_POOL="%s"' % backupserver['backup_pool']
-print 'BACKUP_ZFS_FILESYSTEM="%s"' % backupserver['backup_filesystem']
-print 'BACKUP_MOUNTPOINT="%s"' % backupserver['backup_mountpoint']
-print 'COMPRESSARG="%s"' % (host['rsync_do_compress'] and '--compress' or '')
-print 'BWLIMITARG="%s"' % (
+print('MAILTO="%s"' % config['mail_to'])
+print('RSYNC_TIMEOUT="%s"' % config['rsync_timeout'])
+print('RSYNC_USERNAME="%s"' % config['rsync_username'])
+print('HOSTNAME="%s"' % host['hostname'])
+print('ACTIVE="%s"' % (host['active'] and '1' or '0'))
+print('BACKUP_ZFS_POOL="%s"' % backupserver['backup_pool'])
+print('BACKUP_ZFS_FILESYSTEM="%s"' % backupserver['backup_filesystem'])
+print('BACKUP_MOUNTPOINT="%s"' % backupserver['backup_mountpoint'])
+print('COMPRESSARG="%s"' % (host['rsync_do_compress'] and '--compress' or ''))
+print('BWLIMITARG="%s"' % (
     host['rsync_bwlimit']
-    and ('--bwlimit=%s' % host['rsync_bwlimit']) or '')
-print 'DIR="%s"' % os.path.join(
-    backupserver['backup_mountpoint'], host['hostname'])
+    and ('--bwlimit=%s' % host['rsync_bwlimit']) or ''))
+print('DIR="%s"' % os.path.join(
+    backupserver['backup_mountpoint'], host['hostname']))
 
 #  deactivated backups
 if not host['active']:
@@ -104,10 +104,10 @@ db.commit()
 backup = db.query(
     'SELECT * FROM backups WHERE host_id = %s '
     'ORDER BY id DESC LIMIT 1', host['id'])[0]
-print 'BACKUP_ID="%s"' % backup['id']
-print 'GENERATION="%s"' % backup['generation']
-print 'CHECKSUM="%s"' % (doChecksum and '--ignore-times' or '')
-print 'SNAPSHOTNAME="%s"' % backup['snapshot_name']
+print('BACKUP_ID="%s"' % backup['id'])
+print('GENERATION="%s"' % backup['generation'])
+print('CHECKSUM="%s"' % (doChecksum and '--ignore-times' or ''))
+print('SNAPSHOTNAME="%s"' % backup['snapshot_name'])
 
 excludeFile = os.path.join(
     backupserver['backup_mountpoint'], host['hostname'], 'exclude')

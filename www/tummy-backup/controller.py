@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import sys
@@ -39,7 +39,7 @@ cherrypy.tools.db_close = cherrypy.Tool('on_end_request', db_close)
 
 
 def url(*args, **kwargs):
-    if len(args) == 1 and len(kwargs) == 0 and type(args[0]) in (str, unicode):
+    if len(args) == 1 and len(kwargs) == 0 and type(args[0]) in (str, ):
         return cherrypy.url(args[0])
     else:
         import routes
@@ -91,7 +91,7 @@ def processform(validator, defaults, form, list_fields=[]):
 
     try:
         return {}, validator.to_python(form)
-    except Invalid, e:
+    except Invalid as e:
         return e.unpack_errors(), form
 
 
@@ -842,9 +842,9 @@ def setup_server():
 
 
 if __name__ == '__main__':
-    cfg = setup_server()[0]
-    cfg.update({'log.screen': True})
-    cherrypy.quickstart(config=cfg)
+    #  Basic debugging
+    r = Root()
+    print(r.index())
 else:
     sys.stdout = sys.stderr
     cfg = config()

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #  Run to set up the initial database settings.
 
@@ -9,7 +9,7 @@ from psycopgwrap import Database as db
 db.connect()
 
 if db.queryone("SELECT COUNT(*) FROM backupservers")[0] > 0:
-    print 'ERROR: A server already exists.  Aborting.'
+    print('ERROR: A server already exists.  Aborting.')
     sys.exit(1)
 
 db.query(

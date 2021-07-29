@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #  Check for backup issues, and e-mail alert if there are issues
 

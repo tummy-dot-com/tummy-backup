@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #  Remove a backup from the backup server
 
@@ -26,4 +26,4 @@ backupid = sys.argv[1]
 
 tbsupp.destroyBackup(db, backupid)
 
-print 'Done'
+print('Done')

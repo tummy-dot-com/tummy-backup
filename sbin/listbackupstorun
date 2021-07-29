@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #  List backups that should be run at the current time on the current server.
 
@@ -19,4 +19,4 @@ for host in db.query(
         "AND (SELECT COUNT(*) FROM backups WHERE backup_pid IS NOT NULL "
         "    AND backups.backupserver_id = hosts.backupserver_id "
         "    AND backups.host_id = hosts.id) < 1", backupserver['id']):
-    print host[0]
+    print(host[0])

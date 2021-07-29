@@ -226,7 +226,7 @@ def createNewBackup(db, hostname):
     for dir in [keysDir, logsDir, dataDir]:
         if not os.path.exists(dir):
             os.mkdir(dir)
-    os.chmod(dataDir, 0700)
+    os.chmod(dataDir, 0o700)
 
     updateKey(db, hostname)
 
@@ -323,13 +323,13 @@ def destroyHost(db, hostname, verbose=True):
 
     if os.path.exists(snapsDir):
         if verbose:
-            print 'Destroying snapshots sub-filesystem'
+            print('Destroying snapshots sub-filesystem')
             sys.stdout.flush()
         runZfsDestroy('%s/%s/snapshots' % (
             backupserver['backup_filesystem'], hostname), retries=6)
 
     if verbose:
-        print 'Destroying backup host file-system'
+        print('Destroying backup host file-system')
         sys.stdout.flush()
     runZfsDestroy('%s/%s' % (
         backupserver['backup_filesystem'], hostname,), retries=6)
@@ -437,7 +437,7 @@ def destroyBackup(db, backupid, verbose=True):
             backupid)
 
         if verbose:
-            print (
+            print(
                 'Destroying backup id=%(id)s snapshot=%(snapshot_name)s'
                 % backup) + (
                 ' on remote server=%s' % backupserverrecord['hostname'])
@@ -454,14 +454,14 @@ def destroyBackup(db, backupid, verbose=True):
     snappath = os.path.join(snapsDir, backup['snapshot_name'])
     if os.path.exists(snappath):
         if verbose:
-            print ('Destroying clone snapshot=%(snapshot_name)s' % backup)
+            print('Destroying clone snapshot=%(snapshot_name)s' % backup)
             sys.stdout.flush()
         runZfsDestroy('%s/%s/snapshots/%s' % (
             backupserver['backup_filesystem'], host['hostname'],
             backup['snapshot_name']), retries=6)
 
     if verbose:
-        print 'Destroying backup id=%(id)s snapshot=%(snapshot_name)s' % backup
+        print('Destroying backup id=%(id)s snapshot=%(snapshot_name)s' % backup)
         sys.stdout.flush()
     runZfsDestroy('%s/%s@%s' % (
         backupserver['backup_filesystem'], host['hostname'],

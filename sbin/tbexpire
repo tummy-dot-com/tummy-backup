@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 #  Look for backups that can be removed
 
@@ -37,8 +37,8 @@ for host in db.query('SELECT * FROM hosts'):
 
         if len(backups) <= retain:
             #if options.verbose:
-            #	print 'Not enough backups for generation %s for host %s' % (
-            #			generation, host['hostname'] )
+            #	print('Not enough backups for generation %s for host %s' % (
+            #			generation, host['hostname'] ))
             continue
 
         #  get a list of any backups of this generation which are older
@@ -56,9 +56,9 @@ for host in db.query('SELECT * FROM hosts'):
         if backup['backupserver_id'] != backupserver['id']:
             continue
         if options.verbose:
-            print '   Delete %s -> %s' % (
-                host['hostname'], backup['snapshot_name'])
+            print('   Delete %s -> %s' % (
+                host['hostname'], backup['snapshot_name']))
             age = db.query("SELECT NOW() - %s", backup['start_time'])[0][0]
-            print '      %s > %s for %s' % (age, retain, backup['generation'])
+            print('      %s > %s for %s' % (age, retain, backup['generation']))
         if not options.dryrun:
             tbsupp.destroyBackup(db, backup['id'], verbose=options.verbose)
