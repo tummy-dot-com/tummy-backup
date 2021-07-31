@@ -21,11 +21,8 @@ def setupExceptHook():
         #######################################
         def __call__(self, etype, evalue, etb):
             import traceback
-            import string
             tb = traceback.format_exception(*(etype, evalue, etb))
-            tb = map(string.rstrip, tb)
-            tb = string.join(tb, '\n')
-            for line in string.split(tb, '\n'):
+            for line in [x.rstrip() for x in tb]:
                 if self.useSyslog:
                     from syslog import syslog
                     syslog(line)
@@ -414,7 +411,7 @@ def runWebCmd(backupserverrecord, command):
     pipe = popen(
         sshcmd, stdout=subprocess.PIPE,
         stdin=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-    pipe.stdin.write(command)
+    pipe.stdin.write(command.encode('ascii'))
     pipe.stdin.close()
 
     return OutputClass(pipe, sshcmd)

@@ -619,7 +619,13 @@ class Root(object):
             tbsupp.lookupBackupServer(db, clienthostname=hostname),
             'fsbrowsejson\0%s\0%s\n' % (backup, kwargs['key']))
 
-        return(output.persistent_stdout())
+        read = output.persistent_stdout()
+        while True:
+            data = read.read(10240)
+            if not data:
+                break
+            yield data
+    backupajax._cp_config = {'response.stream': True}
 
     @cherrypy.expose
     def backuprecover(self, hostname, backupid, **kwargs):

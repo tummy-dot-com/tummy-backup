@@ -8,7 +8,7 @@ import re
 import time
 import syslog
 import subprocess
-import urllib
+from urllib import parse
 import tempfile
 
 sys.path.append('/usr/local/lib/tummy-backup/lib')
@@ -55,12 +55,12 @@ def cmdLogfiles(args):
 
 ######################
 def encodeFilename(s):
-    return urllib.quote(s, ' /+=!@#$^&*()[]{}|";:<>?\'~`')
+    return parse.quote(s, ' /+=!@#$^&*()[]{}|";:<>?\'~`')
 
 
 ######################
 def decodeFilename(s):
-    return urllib.unquote(s).encode('latin-1')
+    return parse.unquote(s).encode('latin-1')
 
 
 ##########################
