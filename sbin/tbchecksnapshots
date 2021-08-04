@@ -67,7 +67,7 @@ pipe = tbsupp.popen((
 
 zfs_snapshots = [
     x.split()[0][len(tbfsprefix):] for x in pipe.stdout.readlines()
-    if x.decode('ascii').startswith(tbfsprefix)]
+    if x.startswith(tbfsprefix)]
 
 database_snapshots = getBackupServerSnapshots(db, backupserver)
 
