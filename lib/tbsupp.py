@@ -258,7 +258,7 @@ def popen(*args, **kwargs):
     if not os.environ['PATH'].endswith(add_to_path):
         os.environ['PATH'] += add_to_path
 
-    return subprocess.Popen(*args, **kwargs)
+    return subprocess.Popen(encoding='ascii', text=True, *args, **kwargs)
 
 
 #######################################################

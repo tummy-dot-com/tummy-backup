@@ -25,7 +25,7 @@ def updateServerStats(backupserver):
         stdout=subprocess.PIPE, close_fds=True)
     data = {}
     for line in fp.stdout.readlines():
-        fields = [x.decode('ascii') for x in line.strip().split()]
+        fields = [x for x in line.strip().split()]
         if fields[0] == 'NAME':
             continue
         data[fields[1]] = float(fields[2][:-1]) * {
