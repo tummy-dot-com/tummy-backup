@@ -2,6 +2,12 @@
 #
 #  tummy-backup program that runs the backups for each individual host.
 
+#  If output is /dev/null, re-run with output going to syslog
+if [ "$(readlink -f /proc/$$/fd/1)" == /dev/null ]; then
+    ME="$(readlink --canonicalize --no-newline $BASH_SOURCE)"
+    exec /bin/bash "$ME" "$@" 2>&1 | logger -t zfsharness
+fi
+
 PATH=$PATH:/usr/local/sbin:/sbin
 RSYNC_RETURNCODE=NULL
 SUCCESSFUL=f
