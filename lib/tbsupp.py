@@ -411,7 +411,9 @@ def runWebCmd(backupserverrecord, command):
     pipe = popen(
         sshcmd, stdout=subprocess.PIPE,
         stdin=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-    pipe.stdin.write(command.encode('ascii'))
+    if hasattr(command, 'decode'):
+        command = command.decode('ascii')
+    pipe.stdin.write(command)
     pipe.stdin.close()
 
     return OutputClass(pipe, sshcmd)
