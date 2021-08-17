@@ -855,8 +855,20 @@ else:
     sys.stdout = sys.stderr
     cfg = config()
 
+    def exception_handler(status, message, traceback, version):
+        import syslog
+        import traceback as tb
+        syslog.syslog('CAUGHT EXCEPTION!')
+        syslog.syslog('Message: %s' % (message, ))
+        syslog.syslog('Status: %s' % (status, ))
+        syslog.syslog('Traceback: %s' % (traceback, ))
+        syslog.syslog('exc: %s' % (tb.format_exc()))
+        return('<html><body>An exception occurred, check syslog for more '
+            'details.</body></html>')
+
     cherrypy.config.update({
         'log.error_file': '/tmp/error.log',
+"error_page.default": exception_handler,
     })
     #  basic auth is implemented in Apache, couldn't get it working here
     cfg['/']['tools.auth_basic.on'] = False
