@@ -1,3 +1,5 @@
+This project is deprecated, and should not be used. 2023-08-01
+
 Clustered Backup Server
 =======================
 
